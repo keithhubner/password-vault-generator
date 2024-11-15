@@ -203,6 +203,20 @@ const createItem = (itemType: string, number: number, vaultType: 'individual' | 
           collectionIds: [null]
         }
         break
+      default:
+        // Handle unknown item types by creating a generic secure note
+        item = {
+          id: faker.string.uuid(),
+          organizationId: null,
+          folderId: "",
+          type: 2,
+          name: "Unknown Item Type",
+          notes: "This item was created because an unknown item type was requested.",
+          favorite: false,
+          fields: [],
+          secureNote: { type: 0 },
+          collectionIds: [null]
+        }
     }
     items.push(item)
   }
