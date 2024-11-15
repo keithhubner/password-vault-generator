@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { faker } from '@faker-js/faker'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Download } from 'lucide-react'
+import { Download, Lock } from 'lucide-react'
 
 // Bitwarden interfaces
 interface BaseItem {
@@ -276,6 +276,23 @@ export default function Component() {
   const [useRealUrls, setUseRealUrls] = useState(false)
   const [generatedData, setGeneratedData] = useState("")
 
+  useEffect(() => {
+    // Create a new link element for the favicon
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/svg+xml';
+    link.href = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><rect x=%223%22 y=%2211%22 width=%2218%22 height=%2211%22 rx=%222%22 ry=%222%22></rect><path d=%22M7 11V7a5 5 0 0 1 10 0v4%22></path></svg>';
+
+    // Remove any existing favicon
+    const existingLink = document.querySelector("link[rel*='icon']");
+    if (existingLink) {
+      document.head.removeChild(existingLink);
+    }
+
+    // Add the new favicon to the document head
+    document.head.appendChild(link);
+  }, []);
+
   const generateVault = () => {
     if (vaultFormat === 'bitwarden') {
       const vault: BitwardenVault | BitwardenOrgVault = vaultType === 'individual' 
@@ -334,7 +351,10 @@ export default function Component() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Password Vault Generator</h1>
+      <div className="flex items-center mb-4">
+        <Lock className="h-8 w-8 mr-2" aria-hidden="true" />
+        <h1 className="text-2xl font-bold">Password Vault Generator</h1>
+      </div>
       <div className="space-y-4">
         <div>
           <Label htmlFor="vaultFormat">Vault Format</Label>
