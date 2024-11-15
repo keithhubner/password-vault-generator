@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Download } from 'lucide-react'
 
 // Define interfaces for our vault items
@@ -94,19 +95,30 @@ const generateTOTPSecret = () => {
   return secret
 }
 
+// List of popular websites for generating real URLs
+const popularWebsites = [
+  'google.com', 'youtube.com', 'facebook.com', 'amazon.com', 'twitter.com',
+  'instagram.com', 'linkedin.com', 'netflix.com', 'microsoft.com', 'apple.com',
+  'github.com', 'stackoverflow.com', 'reddit.com', 'twitch.tv', 'spotify.com',
+  'dropbox.com', 'slack.com', 'zoom.us', 'airbnb.com', 'uber.com'
+]
+
 // Helper function to create items
-const createItem = (itemType: string, number: number, vaultType: 'individual' | 'org'): VaultItem[] => {
+const createItem = (itemType: string, number: number, vaultType: 'individual' | 'org', useRealUrls: boolean): VaultItem[] => {
   const items: VaultItem[] = []
   for (let i = 0; i < number; i++) {
     let item: VaultItem
     switch (itemType) {
       case "objType1":
+        const website = useRealUrls 
+          ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
+          : faker.internet.domainName()
         item = {
           id: faker.string.uuid(),
           organizationId: null,
           folderId: "",
           type: 1,
-          name: faker.internet.domainName() + " Login",
+          name: website + " Login",
           notes: faker.lorem.paragraph(),
           favorite: false,
           fields: [
@@ -115,7 +127,7 @@ const createItem = (itemType: string, number: number, vaultType: 'individual' | 
             { name: "Boolean Field", value: "true", type: 2 }
           ],
           login: {
-            uris: [{ match: null, uri: faker.internet.url() }],
+            uris: [{ match: null, uri: `https://www.${website}` }],
             username: faker.internet.email(),
             password: faker.internet.password(),
             totp: `otpauth://totp/Example:${faker.internet.email()}?secret=${generateTOTPSecret()}&issuer=Example&algorithm=SHA1&digits=6&period=30`
@@ -230,6 +242,7 @@ export default function Component() {
   const [identityCount, setIdentityCount] = useState(10)
   const [vaultType, setVaultType] = useState<'individual' | 'org'>('individual')
   const [vaultFormat, setVaultFormat] = useState('bitwarden')
+  const [useRealUrls, setUseRealUrls] = useState(false)
   const [generatedData, setGeneratedData] = useState("")
 
   const generateVault = () => {
@@ -238,10 +251,10 @@ export default function Component() {
       : { collections: [], items: [] }
 
     vault.items = [
-      ...createItem("objType1", loginCount, vaultType),
-      ...createItem("objType2", secureNoteCount, vaultType),
-      ...createItem("objType3", creditCardCount, vaultType),
-      ...createItem("objType4", identityCount, vaultType)
+      ...createItem("objType1", loginCount, vaultType, useRealUrls),
+      ...createItem("objType2", secureNoteCount, vaultType, useRealUrls),
+      ...createItem("objType3", creditCardCount, vaultType, useRealUrls),
+      ...createItem("objType4", identityCount, vaultType, useRealUrls)
     ]
 
     setGeneratedData(JSON.stringify(vault, null, 2))
@@ -333,6 +346,14 @@ export default function Component() {
             aria-describedby="identityCount-description"
           />
           <p id="identityCount-description" className="text-sm text-muted-foreground">Enter the number of identity items to generate</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="useRealUrls" 
+            checked={useRealUrls} 
+            onCheckedChange={(checked) => setUseRealUrls(checked as boolean)}
+          />
+          <Label htmlFor="useRealUrls">Use real website URLs for logins</Label>
         </div>
         <Button onClick={generateVault}>Generate Vault</Button>
       </div>
