@@ -8,6 +8,82 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Download } from 'lucide-react'
 
+// Define interfaces for our vault items
+interface BaseItem {
+  id: string;
+  organizationId: string | null;
+  folderId: string;
+  type: number;
+  name: string;
+  notes: string;
+  favorite: boolean;
+  fields: { name: string; value: string; type: number; }[];
+  collectionIds: (string | null)[];
+}
+
+interface LoginItem extends BaseItem {
+  type: 1;
+  login: {
+    uris: { match: null; uri: string; }[];
+    username: string;
+    password: string;
+    totp: string;
+  };
+}
+
+interface SecureNoteItem extends BaseItem {
+  type: 2;
+  secureNote: { type: number };
+}
+
+interface CreditCardItem extends BaseItem {
+  type: 3;
+  card: {
+    cardholderName: string;
+    brand: string;
+    number: string;
+    expMonth: string;
+    expYear: string;
+    code: string;
+  };
+}
+
+interface IdentityItem extends BaseItem {
+  type: 4;
+  identity: {
+    title: string;
+    firstName: string;
+    middleName: string;
+    lastName: string;
+    address1: string;
+    address2: string;
+    address3: string | null;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    company: string;
+    email: string;
+    phone: string;
+    ssn: string;
+    username: string;
+    passportNumber: string;
+    licenseNumber: string;
+  };
+}
+
+type VaultItem = LoginItem | SecureNoteItem | CreditCardItem | IdentityItem;
+
+interface Vault {
+  folders: { id: string; name: string }[];
+  items: VaultItem[];
+}
+
+interface OrgVault {
+  collections: { id: string; name: string }[];
+  items: VaultItem[];
+}
+
 // Helper function to generate random TOTP secret key
 const generateTOTPSecret = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
@@ -19,10 +95,10 @@ const generateTOTPSecret = () => {
 }
 
 // Helper function to create items
-const createItem = (itemType: string, number: number, vaultType: 'individual' | 'org') => {
-  const items = []
+const createItem = (itemType: string, number: number, vaultType: 'individual' | 'org'): VaultItem[] => {
+  const items: VaultItem[] = []
   for (let i = 0; i < number; i++) {
-    let item
+    let item: VaultItem
     switch (itemType) {
       case "objType1":
         item = {
@@ -143,7 +219,7 @@ export default function Component() {
   const [generatedData, setGeneratedData] = useState("")
 
   const generateVault = () => {
-    const vault = vaultType === 'individual' 
+    const vault: Vault | OrgVault = vaultType === 'individual' 
       ? { folders: [], items: [] }
       : { collections: [], items: [] }
 
