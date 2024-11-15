@@ -315,6 +315,10 @@ export default function Component() {
       content = header + csvContent
       filename = 'lastpass_vault_export.csv'
       type = 'text/csv'
+    } else {
+      // Handle unexpected vault format
+      console.error('Unexpected vault format')
+      return
     }
 
     const blob = new Blob([content], { type })
