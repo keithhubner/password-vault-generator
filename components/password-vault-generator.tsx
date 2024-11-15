@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Download } from 'lucide-react'
 
-// Define interfaces for our vault items
+// Bitwarden interfaces
 interface BaseItem {
   id: string;
   organizationId: string | null;
@@ -73,16 +73,27 @@ interface IdentityItem extends BaseItem {
   };
 }
 
-type VaultItem = LoginItem | SecureNoteItem | CreditCardItem | IdentityItem;
+type BitwardenVaultItem = LoginItem | SecureNoteItem | CreditCardItem | IdentityItem;
 
-interface Vault {
+interface BitwardenVault {
   folders: { id: string; name: string }[];
-  items: VaultItem[];
+  items: BitwardenVaultItem[];
 }
 
-interface OrgVault {
+interface BitwardenOrgVault {
   collections: { id: string; name: string }[];
-  items: VaultItem[];
+  items: BitwardenVaultItem[];
+}
+
+// LastPass interface
+interface LastPassItem {
+  url: string;
+  username: string;
+  password: string;
+  extra: string;
+  name: string;
+  grouping: string;
+  totp: string;
 }
 
 // Helper function to generate random TOTP secret key
@@ -103,11 +114,11 @@ const popularWebsites = [
   'dropbox.com', 'slack.com', 'zoom.us', 'airbnb.com', 'uber.com'
 ]
 
-// Helper function to create items
-const createItem = (itemType: string, number: number, vaultType: 'individual' | 'org', useRealUrls: boolean): VaultItem[] => {
-  const items: VaultItem[] = []
+// Helper function to create Bitwarden items
+const createBitwardenItem = (itemType: string, number: number, vaultType: 'individual' | 'org', useRealUrls: boolean): BitwardenVaultItem[] => {
+  const items: BitwardenVaultItem[] = []
   for (let i = 0; i < number; i++) {
-    let item: VaultItem
+    let item: BitwardenVaultItem
     switch (itemType) {
       case "objType1":
         const website = useRealUrls 
@@ -216,7 +227,6 @@ const createItem = (itemType: string, number: number, vaultType: 'individual' | 
         }
         break
       default:
-        // Handle unknown item types by creating a generic secure note
         item = {
           id: faker.string.uuid(),
           organizationId: null,
@@ -235,6 +245,27 @@ const createItem = (itemType: string, number: number, vaultType: 'individual' | 
   return items
 }
 
+// Helper function to create LastPass items
+const createLastPassItem = (number: number, useRealUrls: boolean): LastPassItem[] => {
+  const items: LastPassItem[] = []
+  for (let i = 0; i < number; i++) {
+    const website = useRealUrls 
+      ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
+      : faker.internet.domainName()
+    const item: LastPassItem = {
+      url: `https://www.${website}`,
+      username: faker.internet.email(),
+      password: faker.internet.password(),
+      extra: faker.lorem.paragraph(),
+      name: website + " Login",
+      grouping: "",
+      totp: generateTOTPSecret()
+    }
+    items.push(item)
+  }
+  return items
+}
+
 export default function Component() {
   const [loginCount, setLoginCount] = useState(10)
   const [secureNoteCount, setSecureNoteCount] = useState(10)
@@ -246,26 +277,51 @@ export default function Component() {
   const [generatedData, setGeneratedData] = useState("")
 
   const generateVault = () => {
-    const vault: Vault | OrgVault = vaultType === 'individual' 
-      ? { folders: [], items: [] }
-      : { collections: [], items: [] }
+    if (vaultFormat === 'bitwarden') {
+      const vault: BitwardenVault | BitwardenOrgVault = vaultType === 'individual' 
+        ? { folders: [], items: [] }
+        : { collections: [], items: [] }
 
-    vault.items = [
-      ...createItem("objType1", loginCount, vaultType, useRealUrls),
-      ...createItem("objType2", secureNoteCount, vaultType, useRealUrls),
-      ...createItem("objType3", creditCardCount, vaultType, useRealUrls),
-      ...createItem("objType4", identityCount, vaultType, useRealUrls)
-    ]
+      vault.items = [
+        ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls),
+        ...createBitwardenItem("objType2", secureNoteCount, vaultType, useRealUrls),
+        ...createBitwardenItem("objType3", creditCardCount, vaultType, useRealUrls),
+        ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls)
+      ]
 
-    setGeneratedData(JSON.stringify(vault, null, 2))
+      setGeneratedData(JSON.stringify(vault, null, 2))
+    } else if (vaultFormat === 'lastpass') {
+      const items = createLastPassItem(loginCount, useRealUrls)
+      setGeneratedData(JSON.stringify(items, null, 2))
+    }
   }
 
-  const downloadJSON = () => {
-    const blob = new Blob([generatedData], { type: 'application/json' })
+  const downloadData = () => {
+    let content: string
+    let filename: string
+    let type: string
+
+    if (vaultFormat === 'bitwarden') {
+      content = generatedData
+      filename = `${vaultType}_${vaultFormat}_vault.json`
+      type = 'application/json'
+    } else if (vaultFormat === 'lastpass') {
+      // Convert JSON to CSV
+      const items: LastPassItem[] = JSON.parse(generatedData)
+      const header = 'url,username,password,extra,name,grouping,totp\n'
+      const csvContent = items.map(item => 
+        `${item.url},${item.username},${item.password},${item.extra},${item.name},${item.grouping},${item.totp}`
+      ).join('\n')
+      content = header + csvContent
+      filename = 'lastpass_vault_export.csv'
+      type = 'text/csv'
+    }
+
+    const blob = new Blob([content], { type })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${vaultType}_${vaultFormat}_vault.json`
+    a.download = filename
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -284,21 +340,24 @@ export default function Component() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="bitwarden">Bitwarden</SelectItem>
+              <SelectItem value="lastpass">LastPass</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label htmlFor="vaultType">Vault Type</Label>
-          <Select onValueChange={(value: 'individual' | 'org') => setVaultType(value)} defaultValue={vaultType}>
-            <SelectTrigger id="vaultType">
-              <SelectValue placeholder="Select vault type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="individual">Individual</SelectItem>
-              <SelectItem value="org">Organization</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {vaultFormat === 'bitwarden' && (
+          <div>
+            <Label htmlFor="vaultType">Vault Type</Label>
+            <Select onValueChange={(value: 'individual' | 'org') => setVaultType(value)} defaultValue={vaultType}>
+              <SelectTrigger id="vaultType">
+                <SelectValue placeholder="Select vault type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="individual">Individual</SelectItem>
+                <SelectItem value="org">Organization</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div>
           <Label htmlFor="loginCount">Number of Logins</Label>
           <Input 
@@ -311,42 +370,46 @@ export default function Component() {
           />
           <p id="loginCount-description" className="text-sm text-muted-foreground">Enter the number of login items to generate (includes random TOTP keys)</p>
         </div>
-        <div>
-          <Label htmlFor="secureNoteCount">Number of Secure Notes</Label>
-          <Input 
-            id="secureNoteCount" 
-            type="number" 
-            value={secureNoteCount} 
-            onChange={(e) => setSecureNoteCount(parseInt(e.target.value))} 
-            min="0"
-            aria-describedby="secureNoteCount-description"
-          />
-          <p id="secureNoteCount-description" className="text-sm text-muted-foreground">Enter the number of secure note items to generate</p>
-        </div>
-        <div>
-          <Label htmlFor="creditCardCount">Number of Credit Cards</Label>
-          <Input 
-            id="creditCardCount" 
-            type="number" 
-            value={creditCardCount} 
-            onChange={(e) => setCreditCardCount(parseInt(e.target.value))} 
-            min="0"
-            aria-describedby="creditCardCount-description"
-          />
-          <p id="creditCardCount-description" className="text-sm text-muted-foreground">Enter the number of credit card items to generate</p>
-        </div>
-        <div>
-          <Label htmlFor="identityCount">Number of Identities</Label>
-          <Input 
-            id="identityCount" 
-            type="number" 
-            value={identityCount} 
-            onChange={(e) => setIdentityCount(parseInt(e.target.value))} 
-            min="0"
-            aria-describedby="identityCount-description"
-          />
-          <p id="identityCount-description" className="text-sm text-muted-foreground">Enter the number of identity items to generate</p>
-        </div>
+        {vaultFormat === 'bitwarden' && (
+          <>
+            <div>
+              <Label htmlFor="secureNoteCount">Number of Secure Notes</Label>
+              <Input 
+                id="secureNoteCount" 
+                type="number" 
+                value={secureNoteCount} 
+                onChange={(e) => setSecureNoteCount(parseInt(e.target.value))} 
+                min="0"
+                aria-describedby="secureNoteCount-description"
+              />
+              <p id="secureNoteCount-description" className="text-sm text-muted-foreground">Enter the number of secure note items to generate</p>
+            </div>
+            <div>
+              <Label htmlFor="creditCardCount">Number of Credit Cards</Label>
+              <Input 
+                id="creditCardCount" 
+                type="number" 
+                value={creditCardCount} 
+                onChange={(e) => setCreditCardCount(parseInt(e.target.value))} 
+                min="0"
+                aria-describedby="creditCardCount-description"
+              />
+              <p id="creditCardCount-description" className="text-sm text-muted-foreground">Enter the number of credit card items to generate</p>
+            </div>
+            <div>
+              <Label htmlFor="identityCount">Number of Identities</Label>
+              <Input 
+                id="identityCount" 
+                type="number" 
+                value={identityCount} 
+                onChange={(e) => setIdentityCount(parseInt(e.target.value))} 
+                min="0"
+                aria-describedby="identityCount-description"
+              />
+              <p id="identityCount-description" className="text-sm text-muted-foreground">Enter the number of identity items to generate</p>
+            </div>
+          </>
+        )}
         <div className="flex items-center space-x-2">
           <Checkbox 
             id="useRealUrls" 
@@ -363,9 +426,9 @@ export default function Component() {
           <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96">
             {generatedData}
           </pre>
-          <Button onClick={downloadJSON} className="mt-4">
+          <Button onClick={downloadData} className="mt-4">
             <Download className="mr-2 h-4 w-4" />
-            Download JSON
+            Download {vaultFormat === 'bitwarden' ? 'JSON' : 'CSV'}
           </Button>
         </div>
       )}
