@@ -16,6 +16,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+      <script defer data-domain="passwordvaultgenerator.com" src="https://plausible.io/js/script.file-downloads.js"></script>
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   )
