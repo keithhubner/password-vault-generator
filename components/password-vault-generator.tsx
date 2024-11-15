@@ -141,7 +141,7 @@ const createBitwardenItem = (itemType: string, number: number, vaultType: 'indiv
             uris: [{ match: null, uri: `https://www.${website}` }],
             username: faker.internet.email(),
             password: faker.internet.password(),
-            totp: `otpauth://totp/Example:${faker.internet.email()}?secret=${generateTOTPSecret()}&issuer=Example&algorithm=SHA1&digits=6&period=30`
+            totp: `${generateTOTPSecret()}`
           },
           collectionIds: [null]
         }
