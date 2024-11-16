@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { faker } from '@faker-js/faker'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +19,11 @@ interface BaseItem {
   notes: string;
   favorite: boolean;
   fields: { name: string; value: string; type: number; }[];
-  collectionIds: (string | null)[];
+  collectionIds: string[];
+  revisionDate: string;
+  creationDate: string;
+  deletedDate: null;
+  reprompt: number;
 }
 
 interface LoginItem extends BaseItem {
@@ -30,6 +34,10 @@ interface LoginItem extends BaseItem {
     password: string;
     totp: string;
   };
+  passwordHistory: {
+    lastUsedDate: string;
+    password: string;
+  }[];
 }
 
 interface SecureNoteItem extends BaseItem {
@@ -81,7 +89,7 @@ interface BitwardenVault {
 }
 
 interface BitwardenOrgVault {
-  collections: { id: string; name: string }[];
+  collections: { id: string; organizationId: string; name: string; externalId: null }[];
   items: BitwardenVaultItem[];
 }
 
@@ -114,130 +122,127 @@ const popularWebsites = [
   'dropbox.com', 'slack.com', 'zoom.us', 'airbnb.com', 'uber.com'
 ]
 
+// List of business departments for collections
+const businessDepartments = [
+  'IT', 'Finance', 'HR', 'Marketing', 'Sales', 'Operations', 'Legal', 'Customer Support'
+]
+
 // Helper function to create Bitwarden items
-const createBitwardenItem = (itemType: string, number: number, vaultType: 'individual' | 'org', useRealUrls: boolean): BitwardenVaultItem[] => {
+const createBitwardenItem = (
+  itemType: string, 
+  number: number, 
+  vaultType: 'individual' | 'org', 
+  useRealUrls: boolean, 
+  collections: { id: string; name: string }[], 
+  distributeItems: boolean
+): BitwardenVaultItem[] => {
   const items: BitwardenVaultItem[] = []
+  const orgId = vaultType === 'org' ? faker.string.uuid() : null
   for (let i = 0; i < number; i++) {
     let item: BitwardenVaultItem
+    const now = new Date().toISOString()
+    const baseItem = {
+      id: faker.string.uuid(),
+      organizationId: orgId,
+      folderId: faker.string.uuid(),
+      favorite: false,
+      fields: [
+        { name: "Text Field", value: "text-field-value", type: 0 },
+        { name: "Hidden Field", value: "hidden-field-value", type: 1 },
+        { name: "Boolean Field", value: faker.datatype.boolean().toString(), type: 2 }
+      ],
+      collectionIds: distributeItems && collections.length > 0
+        ? [collections[Math.floor(Math.random() * collections.length)].id]
+        : [],
+      revisionDate: now,
+      creationDate: now,
+      deletedDate: null,
+      reprompt: 0
+    }
     switch (itemType) {
       case "objType1":
         const website = useRealUrls 
           ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
           : faker.internet.domainName()
         item = {
-          id: faker.string.uuid(),
-          organizationId: null,
-          folderId: "",
+          ...baseItem,
           type: 1,
           name: website + " Login",
           notes: faker.lorem.paragraph(),
-          favorite: false,
-          fields: [
-            { name: "Text Field", value: "text-field-value", type: 0 },
-            { name: "Hidden Field", value: "hidden-field-value", type: 1 },
-            { name: "Boolean Field", value: "true", type: 2 }
-          ],
           login: {
             uris: [{ match: null, uri: `https://www.${website}` }],
             username: faker.internet.email(),
             password: faker.internet.password(),
-            totp: `${generateTOTPSecret()}`
+            totp: `otpauth://totp/Example:${faker.internet.email()}?secret=${generateTOTPSecret()}&issuer=Example&algorithm=SHA1&digits=6&period=30`
           },
-          collectionIds: [null]
+          passwordHistory: [
+            {
+              lastUsedDate: faker.date.past().toISOString(),
+              password: faker.internet.password()
+            }
+          ]
         }
         break
       case "objType2":
         item = {
-          id: faker.string.uuid(),
-          organizationId: null,
-          folderId: "",
+          ...baseItem,
           type: 2,
           name: "My Secure Note",
           notes: faker.lorem.paragraph(),
-          favorite: false,
-          fields: [
-            { name: "Text Field", value: "text-field-value", type: 0 },
-            { name: "Hidden Field", value: "hidden-field-value", type: 1 },
-            { name: "Boolean Field", value: "false", type: 2 }
-          ],
-          secureNote: { type: 0 },
-          collectionIds: [null]
+          secureNote: { type: 0 }
         }
         break
       case "objType3":
         item = {
-          id: faker.string.uuid(),
-          organizationId: null,
-          folderId: "",
+          ...baseItem,
           type: 3,
           name: faker.finance.accountName(),
           notes: faker.lorem.paragraph(),
-          favorite: false,
-          fields: [
-            { name: "Text Field", value: "text-field-value", type: 0 },
-            { name: "Hidden Field", value: "hidden-field-value", type: 1 },
-            { name: "Boolean Field", value: "false", type: 2 }
-          ],
           card: {
-            cardholderName: "Jane Doe",
+            cardholderName: faker.person.fullName(),
             brand: "Visa",
-            number: faker.finance.creditCardNumber('visa'),
+            number: faker.finance.creditCardNumber(),
             expMonth: faker.number.int({ min: 1, max: 12 }).toString(),
-            expYear: faker.number.int({ min: 2024, max: 2030 }).toString(),
+            expYear: faker.date.future().getFullYear().toString(),
             code: faker.finance.creditCardCVV()
-          },
-          collectionIds: [null]
+          }
         }
         break
       case "objType4":
         item = {
-          id: faker.string.uuid(),
-          organizationId: null,
-          folderId: "",
+          ...baseItem,
           type: 4,
           name: faker.person.fullName(),
           notes: faker.lorem.paragraph(),
-          favorite: false,
-          fields: [
-            { name: "Text Field", value: "text-field-value", type: 0 },
-            { name: "Hidden Field", value: "hidden-field-value", type: 1 },
-            { name: "Boolean Field", value: "true", type: 2 }
-          ],
           identity: {
-            title: "",
+            title: faker.person.prefix(),
             firstName: faker.person.firstName(),
             middleName: faker.person.middleName(),
             lastName: faker.person.lastName(),
             address1: faker.location.streetAddress(),
-            address2: faker.location.street(),
+            address2: faker.location.secondaryAddress(),
             address3: null,
             city: faker.location.city(),
             state: faker.location.state(),
             postalCode: faker.location.zipCode(),
-            country: "United States",
+            country: faker.location.country(),
             company: faker.company.name(),
             email: faker.internet.email(),
             phone: faker.phone.number(),
-            ssn: "123-12-1234",
+            ssn: faker.string.numeric(9),
             username: faker.internet.userName(),
-            passportNumber: faker.string.numeric({ length: 10, allowLeadingZeros: false }),
-            licenseNumber: faker.string.numeric({ length: 10, allowLeadingZeros: false })
-          },
-          collectionIds: [null]
+            passportNumber: faker.string.alphanumeric(9),
+            licenseNumber: faker.string.alphanumeric(8)
+          }
         }
         break
       default:
         item = {
-          id: faker.string.uuid(),
-          organizationId: null,
-          folderId: "",
+          ...baseItem,
           type: 2,
           name: "Unknown Item Type",
           notes: "This item was created because an unknown item type was requested.",
-          favorite: false,
-          fields: [],
-          secureNote: { type: 0 },
-          collectionIds: [null]
+          secureNote: { type: 0 }
         }
     }
     items.push(item)
@@ -274,39 +279,40 @@ export default function Component() {
   const [vaultType, setVaultType] = useState<'individual' | 'org'>('individual')
   const [vaultFormat, setVaultFormat] = useState('bitwarden')
   const [useRealUrls, setUseRealUrls] = useState(false)
+  const [useCollections, setUseCollections] = useState(false)
+  const [distributeItems, setDistributeItems] = useState(false)
   const [generatedData, setGeneratedData] = useState("")
-
-  useEffect(() => {
-    // Create a new link element for the favicon
-    const link = document.createElement('link');
-    link.rel = 'icon';
-    link.type = 'image/svg+xml';
-    link.href = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><rect x=%223%22 y=%2211%22 width=%2218%22 height=%2211%22 rx=%222%22 ry=%222%22></rect><path d=%22M7 11V7a5 5 0 0 1 10 0v4%22></path></svg>';
-
-    // Remove any existing favicon
-    const existingLink = document.querySelector("link[rel*='icon']");
-    if (existingLink) {
-      document.head.removeChild(existingLink);
-    }
-
-    // Add the new favicon to the document head
-    document.head.appendChild(link);
-  }, []);
 
   const generateVault = () => {
     if (vaultFormat === 'bitwarden') {
-      const vault: BitwardenVault | BitwardenOrgVault = vaultType === 'individual' 
-        ? { folders: [], items: [] }
-        : { collections: [], items: [] }
-
-      vault.items = [
-        ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls),
-        ...createBitwardenItem("objType2", secureNoteCount, vaultType, useRealUrls),
-        ...createBitwardenItem("objType3", creditCardCount, vaultType, useRealUrls),
-        ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls)
-      ]
-
-      setGeneratedData(JSON.stringify(vault, null, 2))
+      if (vaultType === 'individual') {
+        const vault: BitwardenVault = { folders: [], items: [] }
+        vault.items = [
+          ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls, [], false),
+          ...createBitwardenItem("objType2", secureNoteCount, vaultType, useRealUrls, [], false),
+          ...createBitwardenItem("objType3", creditCardCount, vaultType, useRealUrls, [], false),
+          ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls, [], false)
+        ]
+        setGeneratedData(JSON.stringify(vault, null, 2))
+      } else {
+        const orgVault: BitwardenOrgVault = { collections: [], items: [] }
+        const orgId = faker.string.uuid()
+        if (useCollections) {
+          orgVault.collections = businessDepartments.map(dept => ({
+            id: faker.string.uuid(),
+            organizationId: orgId,
+            name: dept,
+            externalId: null
+          }))
+        }
+        orgVault.items = [
+          ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls, orgVault.collections, distributeItems),
+          ...createBitwardenItem("objType2", secureNoteCount, vaultType, useRealUrls, orgVault.collections, distributeItems),
+          ...createBitwardenItem("objType3", creditCardCount, vaultType, useRealUrls, orgVault.collections, distributeItems),
+          ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls, orgVault.collections, distributeItems)
+        ]
+        setGeneratedData(JSON.stringify(orgVault, null, 2))
+      }
     } else if (vaultFormat === 'lastpass') {
       const items = createLastPassItem(loginCount, useRealUrls)
       setGeneratedData(JSON.stringify(items, null, 2))
@@ -442,6 +448,28 @@ export default function Component() {
           />
           <Label htmlFor="useRealUrls">Use real website URLs for logins</Label>
         </div>
+        {vaultFormat === 'bitwarden' && vaultType === 'org' && (
+          <>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="useCollections" 
+                checked={useCollections} 
+                onCheckedChange={(checked) => setUseCollections(checked as boolean)}
+              />
+              <Label htmlFor="useCollections">Create collections for business departments</Label>
+            </div>
+            {useCollections && (
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="distributeItems" 
+                  checked={distributeItems} 
+                  onCheckedChange={(checked) => setDistributeItems(checked as boolean)}
+                />
+                <Label htmlFor="distributeItems">Distribute items into collections</Label>
+              </div>
+            )}
+          </>
+        )}
         <Button onClick={generateVault}>Generate Vault</Button>
       </div>
       {generatedData && (
