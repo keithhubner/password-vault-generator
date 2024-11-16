@@ -373,7 +373,7 @@ export default function Component() {
     }
   }
 
-  const downloadData = () => {
+  const downloadData = (format: 'json' | 'csv' = 'json') => {
     let content: string
     let filename: string
     let type: string
@@ -396,9 +396,28 @@ export default function Component() {
       filename = 'lastpass_vault_export.csv'
       type = 'text/csv'
     } else if (vaultFormat === 'keeper') {
-      content = generatedData
-      filename = 'keeper_vault_export.json'
-      type = 'application/json'
+      if (format === 'json') {
+        content = generatedData
+        filename = 'keeper_vault_export.json'
+        type = 'application/json'
+      } else {
+        // Convert JSON to CSV
+        const vault: KeeperVault = JSON.parse(generatedData)
+        const header = 'Folder,Title,Login,Password,Website Address,Notes,Shared Folder,Custom Fields\n'
+        const csvContent = vault.records
+          .map((record) => {
+            const folder = record.folders.find((f) => 'folder' in f)?.folder || ''
+            const sharedFolder = record.folders.find((f) => 'shared_folder' in f)?.shared_folder || ''
+            const customFields = Object.entries(record.custom_fields)
+              .map(([key, value]) => `${key}: ${value}`)
+              .join('; ')
+            return `"${folder}","${record.title}","${record.login}","${record.password}","${record.login_url}","${record.notes}","${sharedFolder}","${customFields}"`
+          })
+          .join('\n')
+        content = header + csvContent
+        filename = 'keeper_vault_export.csv'
+        type = 'text/csv'
+      }
     } else {
       // Handle unexpected vault format
       console.error('Unexpected vault format')
@@ -540,10 +559,25 @@ export default function Component() {
           <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96">
             {generatedData}
           </pre>
-          <Button onClick={downloadData} className="mt-4">
-            <Download className="mr-2 h-4 w-4" />
-            Download {vaultFormat === 'lastpass' ? 'CSV' : 'JSON'}
-          </Button>
+          <div className="mt-4 space-x-4">
+            {vaultFormat === 'keeper' ? (
+              <>
+                <Button onClick={() => downloadData('json')}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download JSON
+                </Button>
+                <Button onClick={() => downloadData('csv')}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download CSV
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => downloadData()}>
+                <Download className="mr-2 h-4 w-4" />
+                Download {vaultFormat === 'lastpass' ? 'CSV' : 'JSON'}
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>
