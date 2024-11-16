@@ -104,6 +104,24 @@ interface LastPassItem {
   totp: string;
 }
 
+// Keeper interface
+interface KeeperRecord {
+  title: string;
+  login: string;
+  password: string;
+  login_url: string;
+  notes: string;
+  custom_fields: { [key: string]: string };
+  folders: (
+    | { folder: string }
+    | { shared_folder: string; can_edit: boolean; can_share: boolean }
+  )[];
+}
+
+interface KeeperVault {
+  records: KeeperRecord[];
+}
+
 // Helper function to generate random TOTP secret key
 const generateTOTPSecret = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
@@ -271,6 +289,39 @@ const createLastPassItem = (number: number, useRealUrls: boolean): LastPassItem[
   return items
 }
 
+// Helper function to create Keeper items
+const createKeeperItem = (number: number, useRealUrls: boolean): KeeperRecord[] => {
+  const items: KeeperRecord[] = []
+  for (let i = 0; i < number; i++) {
+    const website = useRealUrls 
+      ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
+      : faker.internet.domainName()
+    const item: KeeperRecord = {
+      title: website + " Login",
+      login: faker.internet.userName(),
+      password: faker.internet.password(),
+      login_url: `https://www.${website}`,
+      notes: faker.lorem.paragraph(),
+      custom_fields: {
+        "Security Group": faker.helpers.arrayElement(["Private", "Public"]),
+        "IP Address": faker.internet.ip(),
+        "Favorite Food": faker.word.noun(),
+        "$oneTimeCode": `otpauth://totp/Example:${faker.internet.email()}?secret=${generateTOTPSecret()}&issuer=Example&algorithm=SHA1&digits=6&period=30`
+      },
+      folders: [
+        { folder: faker.helpers.arrayElement(["Private Folder", "My Websites", "Social Media"]) },
+        ...(Math.random() > 0.5 ? [{
+          shared_folder: "Shared Folder",
+          can_edit: faker.datatype.boolean(),
+          can_share: faker.datatype.boolean()
+        }] : [])
+      ]
+    }
+    items.push(item)
+  }
+  return items
+}
+
 export default function Component() {
   const [loginCount, setLoginCount] = useState(10)
   const [secureNoteCount, setSecureNoteCount] = useState(10)
@@ -316,6 +367,9 @@ export default function Component() {
     } else if (vaultFormat === 'lastpass') {
       const items = createLastPassItem(loginCount, useRealUrls)
       setGeneratedData(JSON.stringify(items, null, 2))
+    } else if (vaultFormat === 'keeper') {
+      const vault: KeeperVault = { records: createKeeperItem(loginCount, useRealUrls) }
+      setGeneratedData(JSON.stringify(vault, null, 2))
     }
   }
 
@@ -332,12 +386,19 @@ export default function Component() {
       // Convert JSON to CSV
       const items: LastPassItem[] = JSON.parse(generatedData)
       const header = 'url,username,password,extra,name,grouping,totp\n'
-      const csvContent = items.map(item => 
-        `${item.url},${item.username},${item.password},${item.extra},${item.name},${item.grouping},${item.totp}`
-      ).join('\n')
+      const csvContent = items
+        .map(
+          (item) =>
+            `${item.url},${item.username},${item.password},${item.extra},${item.name},${item.grouping},${item.totp}`
+        )
+        .join('\n')
       content = header + csvContent
       filename = 'lastpass_vault_export.csv'
       type = 'text/csv'
+    } else if (vaultFormat === 'keeper') {
+      content = generatedData
+      filename = 'keeper_vault_export.json'
+      type = 'application/json'
     } else {
       // Handle unexpected vault format
       console.error('Unexpected vault format')
@@ -371,6 +432,7 @@ export default function Component() {
             <SelectContent>
               <SelectItem value="bitwarden">Bitwarden</SelectItem>
               <SelectItem value="lastpass">LastPass</SelectItem>
+              <SelectItem value="keeper">Keeper</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -480,7 +542,7 @@ export default function Component() {
           </pre>
           <Button onClick={downloadData} className="mt-4">
             <Download className="mr-2 h-4 w-4" />
-            Download {vaultFormat === 'bitwarden' ? 'JSON' : 'CSV'}
+            Download {vaultFormat === 'lastpass' ? 'CSV' : 'JSON'}
           </Button>
         </div>
       )}
