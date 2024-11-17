@@ -546,7 +546,7 @@ export default function Component() {
                   checked={distributeItems} 
                   onCheckedChange={(checked) => setDistributeItems(checked as boolean)}
                 />
-                <Label htmlFor="distributeItems">Distribute items into collections</Label>
+                <Label htmlFor="distributeItems">Assign items to collections</Label>
               </div>
             )}
           </>
