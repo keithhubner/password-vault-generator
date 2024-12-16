@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: password-vault-generator
+  namespace: password-vault-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: password-vault-generator
+  template:
+    metadata:
+      labels:
+        app: password-vault-generator
+    spec:
+      containers:
+      - name: password-vault-generator
+        image: keithhubner/password-vault-generator:latest
+        ports:
+        - containerPort: 3000
+        env:
+        # Add environment variables here if needed
+        # - name: NODE_ENV
+        #   value: "production" 

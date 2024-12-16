@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nextjs-config
+  namespace: password-vault-generator
+data:
+  NODE_ENV: "production"
+  # Add other environment variables here 
