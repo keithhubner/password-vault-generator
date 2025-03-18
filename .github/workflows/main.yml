@@ -57,6 +57,5 @@ jobs:
         run: |
           sed -i "s|ghcr.io/${{ github.repository }}/passwordvaultgenerator:.*|ghcr.io/${{ github.repository }}/passwordvaultgenerator:${{ env.IMAGE_TAG }}|" k8s/deployment.yaml
           kubectl apply -f k8s/deployment.yaml
-          kubectl apply -f k8s/ingress.yaml
           kubectl rollout restart deployment/passwordvaultgenerator -n passwordvaultgenerator
           kubectl rollout status deployment/passwordvaultgenerator -n passwordvaultgenerator
