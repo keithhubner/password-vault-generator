@@ -18,7 +18,10 @@ spec:
         image: keithhubner/password-vault-generator:latest
         ports:
         - containerPort: 3000
-        env:
-        # Add environment variables here if needed
-        # - name: NODE_ENV
-        #   value: "production" 
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"

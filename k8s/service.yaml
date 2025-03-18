@@ -4,7 +4,7 @@ metadata:
   name: password-vault-generator
   namespace: password-vault-generator
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: password-vault-generator
   ports:
