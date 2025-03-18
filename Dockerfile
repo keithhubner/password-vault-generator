@@ -13,9 +13,6 @@ COPY . .
 # Install dependencies
 RUN npm cache clean --force && npm install --legacy-peer-deps --verbose
 
-# Compile next.config.ts if necessary (optional)
-RUN npx ts-node next.config.ts
-
 # Build the Next.js application
 RUN npm run build
 
@@ -30,7 +27,7 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
-COPY --from=builder /app/next.config.ts ./next.config.ts  # Use TS file
+COPY --from=builder /app/next.config.ts ./next.config.ts  # Keep TS version
 
 # Copy production dependencies
 COPY --from=builder /app/node_modules ./node_modules
