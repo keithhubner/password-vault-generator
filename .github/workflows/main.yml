@@ -43,8 +43,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/passwordvaultgenerator:latest
-            ghcr.io/${{ github.repository }}/passwordvaultgenerator:${{ env.IMAGE_TAG }}
+            ghcr.io/keithhubner/passwordvaultgenerator:latest
+            ghcr.io/keithhubner/passwordvaultgenerator:${{ env.IMAGE_TAG }}
 
       # 7. Create Kubeconfig
       - name: Create Kubeconfig
