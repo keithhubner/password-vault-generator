@@ -1,204 +1,253 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { faker } from '@faker-js/faker'
+import { useState } from "react"
+import { faker } from "@faker-js/faker"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Download, Lock } from 'lucide-react'
+import { Download, Lock } from "lucide-react"
 
 // Bitwarden interfaces
 interface BaseItem {
-  id: string;
-  organizationId: string | null;
-  folderId: string;
-  type: number;
-  name: string;
-  notes: string;
-  favorite: boolean;
-  fields: { name: string; value: string; type: number; }[];
-  collectionIds: string[];
-  revisionDate: string;
-  creationDate: string;
-  deletedDate: null;
-  reprompt: number;
+  id: string
+  organizationId: string | null
+  folderId: string
+  type: number
+  name: string
+  notes: string
+  favorite: boolean
+  fields: { name: string; value: string; type: number }[]
+  collectionIds: string[]
+  revisionDate: string
+  creationDate: string
+  deletedDate: null
+  reprompt: number
 }
 
 interface LoginItem extends BaseItem {
-  type: 1;
+  type: 1
   login: {
-    uris: { match: null; uri: string; }[];
-    username: string;
-    password: string;
-    totp: string;
-  };
+    uris: { match: null; uri: string }[]
+    username: string
+    password: string
+    totp: string
+  }
   passwordHistory: {
-    lastUsedDate: string;
-    password: string;
-  }[];
+    lastUsedDate: string
+    password: string
+  }[]
 }
 
 interface SecureNoteItem extends BaseItem {
-  type: 2;
-  secureNote: { type: number };
+  type: 2
+  secureNote: { type: number }
 }
 
 interface CreditCardItem extends BaseItem {
-  type: 3;
+  type: 3
   card: {
-    cardholderName: string;
-    brand: string;
-    number: string;
-    expMonth: string;
-    expYear: string;
-    code: string;
-  };
+    cardholderName: string
+    brand: string
+    number: string
+    expMonth: string
+    expYear: string
+    code: string
+  }
 }
 
 interface IdentityItem extends BaseItem {
-  type: 4;
+  type: 4
   identity: {
-    title: string;
-    firstName: string;
-    middleName: string;
-    lastName: string;
-    address1: string;
-    address2: string;
-    address3: string | null;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    company: string;
-    email: string;
-    phone: string;
-    ssn: string;
-    username: string;
-    passportNumber: string;
-    licenseNumber: string;
-  };
+    title: string
+    firstName: string
+    middleName: string
+    lastName: string
+    address1: string
+    address2: string
+    address3: string | null
+    city: string
+    state: string
+    postalCode: string
+    country: string
+    company: string
+    email: string
+    phone: string
+    ssn: string
+    username: string
+    passportNumber: string
+    licenseNumber: string
+  }
 }
 
-type BitwardenVaultItem = LoginItem | SecureNoteItem | CreditCardItem | IdentityItem;
+type BitwardenVaultItem = LoginItem | SecureNoteItem | CreditCardItem | IdentityItem
 
 interface BitwardenVault {
-  folders: { id: string; name: string }[];
-  items: BitwardenVaultItem[];
+  folders: { id: string; name: string }[]
+  items: BitwardenVaultItem[]
 }
 
 interface BitwardenOrgVault {
-  collections: { id: string; organizationId: string; name: string; externalId: null }[];
-  items: BitwardenVaultItem[];
+  collections: { id: string; organizationId: string; name: string; externalId: null }[]
+  items: BitwardenVaultItem[]
 }
 
 // LastPass interface
 interface LastPassItem {
-  url: string;
-  username: string;
-  password: string;
-  extra: string;
-  name: string;
-  grouping: string;
-  totp: string;
+  url: string
+  username: string
+  password: string
+  extra: string
+  name: string
+  grouping: string
+  totp: string
 }
 
-// Keeper interface
+// Keeper interface with updated folder structure
+interface KeeperFolder {
+  name: string
+  path?: string // Full path for nested folders (e.g., "Personal/Finance/Banking")
+  children?: KeeperFolder[] // For nested folders
+}
+
+interface KeeperSharedFolder {
+  name: string
+  can_edit: boolean
+  can_share: boolean
+  path?: string // Full path for nested folders
+  children?: KeeperSharedFolder[] // For nested folders
+}
+
+// Updated to support nested folders
+interface KeeperFolderReference {
+  folder?: string
+  folder_path?: string // Full path for nested folders
+  shared_folder?: string
+  shared_folder_path?: string // Full path for nested folders
+  can_edit?: boolean
+  can_share?: boolean
+}
+
 interface KeeperRecord {
-  title: string;
-  login: string;
-  password: string;
-  login_url: string;
-  notes: string;
-  custom_fields: { [key: string]: string };
-  folders: (
-    | { folder: string }
-    | { shared_folder: string; can_edit: boolean; can_share: boolean }
-  )[];
+  title: string
+  login: string
+  password: string
+  login_url: string
+  notes: string
+  custom_fields: { [key: string]: string }
+  folders: KeeperFolderReference[]
 }
 
 interface KeeperVault {
-  records: KeeperRecord[];
+  records: KeeperRecord[]
+  folders?: KeeperFolder[] // Add folder structure to vault
+  shared_folders?: KeeperSharedFolder[] // Add shared folder structure to vault
 }
 
 // Helper function to generate random TOTP secret key
 const generateTOTPSecret = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
-  let secret = ''
-  for (let i = 0; i < 32; i++) {
-    secret += chars[Math.floor(Math.random() * chars.length)]
-  }
-  return secret
+  return faker.string.alphanumeric(32).toUpperCase()
 }
 
-// List of popular websites for generating real URLs
-const popularWebsites = [
-  'google.com', 'youtube.com', 'facebook.com', 'amazon.com', 'twitter.com',
-  'instagram.com', 'linkedin.com', 'netflix.com', 'microsoft.com', 'apple.com',
-  'github.com', 'stackoverflow.com', 'reddit.com', 'twitch.tv', 'spotify.com',
-  'dropbox.com', 'slack.com', 'zoom.us', 'airbnb.com', 'uber.com'
+// Sample business departments for collections
+const businessDepartments = [
+  "Executive",
+  "Finance",
+  "Human Resources",
+  "Information Technology",
+  "Marketing",
+  "Operations",
+  "Research & Development",
+  "Sales",
+  "Customer Support",
 ]
 
-// List of business departments for collections
-const businessDepartments = [
-  'IT', 'Finance', 'HR', 'Marketing', 'Sales', 'Operations', 'Legal', 'Customer Support'
+// Sample popular websites for realistic URLs
+const popularWebsites = [
+  "google.com",
+  "facebook.com",
+  "amazon.com",
+  "twitter.com",
+  "instagram.com",
+  "linkedin.com",
+  "netflix.com",
+  "microsoft.com",
+  "apple.com",
+  "github.com",
+  "youtube.com",
+  "reddit.com",
+  "wikipedia.org",
+  "yahoo.com",
+  "twitch.tv",
 ]
 
 // Helper function to create Bitwarden items
 const createBitwardenItem = (
-  itemType: string, 
-  number: number, 
-  vaultType: 'individual' | 'org', 
-  useRealUrls: boolean, 
-  collections: { id: string; name: string }[], 
-  distributeItems: boolean
+  objType: string,
+  count: number,
+  vaultType: "individual" | "org",
+  useRealUrls: boolean,
+  collections: { id: string; name: string }[],
+  distributeItems: boolean,
 ): BitwardenVaultItem[] => {
   const items: BitwardenVaultItem[] = []
-  const orgId = vaultType === 'org' ? faker.string.uuid() : null
-  for (let i = 0; i < number; i++) {
-    let item: BitwardenVaultItem
-    const now = new Date().toISOString()
-    const baseItem = {
+
+  for (let i = 0; i < count; i++) {
+    const baseItem: BaseItem = {
       id: faker.string.uuid(),
-      organizationId: orgId,
-      folderId: faker.string.uuid(),
-      favorite: false,
-      fields: [
-        { name: "Text Field", value: "text-field-value", type: 0 },
-        { name: "Hidden Field", value: "hidden-field-value", type: 1 },
-        { name: "Boolean Field", value: faker.datatype.boolean().toString(), type: 2 }
-      ],
-      collectionIds: distributeItems && collections.length > 0
-        ? [collections[Math.floor(Math.random() * collections.length)].id]
-        : [],
-      revisionDate: now,
-      creationDate: now,
+      organizationId: vaultType === "org" ? faker.string.uuid() : null,
+      folderId: vaultType === "individual" ? faker.string.uuid() : "",
+      type: 1, // Will be overridden
+      name: "",
+      notes: "",
+      favorite: faker.datatype.boolean(),
+      fields: [],
+      collectionIds: [],
+      revisionDate: faker.date.recent().toISOString(),
+      creationDate: faker.date.past().toISOString(),
       deletedDate: null,
-      reprompt: 0
+      reprompt: 0,
     }
-    switch (itemType) {
+
+    // If org vault and distribute items is enabled, assign to random collections
+    if (vaultType === "org" && distributeItems && collections.length > 0) {
+      // Assign to 1-3 random collections
+      const numCollections = faker.number.int({ min: 1, max: 3 })
+      const shuffledCollections = [...collections].sort(() => 0.5 - Math.random())
+      baseItem.collectionIds = shuffledCollections.slice(0, numCollections).map((c) => c.id)
+    }
+
+    let item: BitwardenVaultItem
+
+    switch (objType) {
       case "objType1":
-        const website = useRealUrls 
+        const website = useRealUrls
           ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
           : faker.internet.domainName()
+
         item = {
           ...baseItem,
           type: 1,
           name: website + " Login",
           notes: faker.lorem.paragraph(),
           login: {
-            uris: [{ match: null, uri: `https://www.${website}` }],
-            username: faker.internet.email(),
+            uris: [
+              {
+                match: null,
+                uri: `https://www.${website}`,
+              },
+            ],
+            username: faker.internet.userName(),
             password: faker.internet.password(),
-            totp: `otpauth://totp/Example:${faker.internet.email()}?secret=${generateTOTPSecret()}&issuer=Example&algorithm=SHA1&digits=6&period=30`
+            totp: generateTOTPSecret(),
           },
           passwordHistory: [
             {
               lastUsedDate: faker.date.past().toISOString(),
-              password: faker.internet.password()
-            }
-          ]
+              password: faker.internet.password(),
+            },
+          ],
         }
         break
       case "objType2":
@@ -207,7 +256,7 @@ const createBitwardenItem = (
           type: 2,
           name: "My Secure Note",
           notes: faker.lorem.paragraph(),
-          secureNote: { type: 0 }
+          secureNote: { type: 0 },
         }
         break
       case "objType3":
@@ -222,8 +271,8 @@ const createBitwardenItem = (
             number: faker.finance.creditCardNumber(),
             expMonth: faker.number.int({ min: 1, max: 12 }).toString(),
             expYear: faker.date.future().getFullYear().toString(),
-            code: faker.finance.creditCardCVV()
-          }
+            code: faker.finance.creditCardCVV(),
+          },
         }
         break
       case "objType4":
@@ -250,21 +299,17 @@ const createBitwardenItem = (
             ssn: faker.string.numeric(9),
             username: faker.internet.userName(),
             passportNumber: faker.string.alphanumeric(9),
-            licenseNumber: faker.string.alphanumeric(8)
-          }
+            licenseNumber: faker.string.alphanumeric(8),
+          },
         }
         break
       default:
-        item = {
-          ...baseItem,
-          type: 2,
-          name: "Unknown Item Type",
-          notes: "This item was created because an unknown item type was requested.",
-          secureNote: { type: 0 }
-        }
+        throw new Error(`Unknown object type: ${objType}`)
     }
+
     items.push(item)
   }
+
   return items
 }
 
@@ -272,7 +317,7 @@ const createBitwardenItem = (
 const createLastPassItem = (number: number, useRealUrls: boolean): LastPassItem[] => {
   const items: LastPassItem[] = []
   for (let i = 0; i < number; i++) {
-    const website = useRealUrls 
+    const website = useRealUrls
       ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
       : faker.internet.domainName()
     const item: LastPassItem = {
@@ -282,20 +327,374 @@ const createLastPassItem = (number: number, useRealUrls: boolean): LastPassItem[
       extra: faker.lorem.paragraph(),
       name: website + " Login",
       grouping: "",
-      totp: generateTOTPSecret()
+      totp: generateTOTPSecret(),
     }
     items.push(item)
   }
   return items
 }
 
-// Helper function to create Keeper items
-const createKeeperItem = (number: number, useRealUrls: boolean): KeeperRecord[] => {
+// Find the generateFolderStructure function and replace it with this improved version
+// that properly implements deep nesting
+
+const generateFolderStructure = (maxDepth = 3, maxChildren = 3): KeeperFolder[] => {
+  // Base categories for top level
+  const folderCategories = [
+    "Personal",
+    "Work",
+    "Finance",
+    "Social",
+    "Shopping",
+    "Travel",
+    "Entertainment",
+    "Health",
+    "Education",
+    "Family",
+  ]
+
+  // Categories for second level
+  const subCategories: Record<string, string[]> = {
+    Personal: ["Documents", "Photos", "Contacts", "Notes"],
+    Work: ["Projects", "Clients", "Meetings", "Resources"],
+    Finance: ["Banking", "Investments", "Insurance", "Taxes"],
+    Social: ["Facebook", "Twitter", "Instagram", "LinkedIn"],
+    Shopping: ["Amazon", "eBay", "Etsy", "Walmart"],
+    Travel: ["Airlines", "Hotels", "Rentals", "Bookings"],
+    Entertainment: ["Streaming", "Gaming", "Music", "Movies"],
+    Health: ["Medical", "Fitness", "Insurance", "Prescriptions"],
+    Education: ["Courses", "Certificates", "Resources", "Schools"],
+    Family: ["Children", "Spouse", "Parents", "Relatives"],
+  }
+
+  // Categories for third level
+  const subSubCategories: Record<string, string[]> = {
+    Banking: ["Checking", "Savings", "Credit Cards", "Loans"],
+    Investments: ["Stocks", "Bonds", "Crypto", "Retirement"],
+    Projects: ["Active", "Completed", "Planning", "Archive"],
+    Streaming: ["Netflix", "Hulu", "Disney+", "HBO Max"],
+    Airlines: ["Domestic", "International", "Rewards", "Bookings"],
+  }
+
+  // Categories for deeper levels (4+)
+  const deepCategories = [
+    "Primary",
+    "Secondary",
+    "Archived",
+    "Important",
+    "Confidential",
+    "Shared",
+    "Private",
+    "Legacy",
+    "Current",
+    "Draft",
+    "Final",
+    "2023",
+    "2024",
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4",
+    "East",
+    "West",
+    "North",
+    "South",
+  ]
+
+  // Recursive function to generate nested folders at any depth
+  const generateNestedFolders = (depth: number, parentPath = ""): KeeperFolder[] => {
+    if (depth <= 0) return []
+
+    // For deeper levels, use the deep categories
+    const categoriesToUse = depth <= 3 ? deepCategories : deepCategories
+    const numFolders = faker.number.int({ min: 1, max: Math.min(4, categoriesToUse.length) })
+
+    // Select random categories for this level
+    const selectedCategories = [...categoriesToUse].sort(() => 0.5 - Math.random()).slice(0, numFolders)
+
+    return selectedCategories.map((category) => {
+      const currentPath = parentPath ? `${parentPath}\\${category}` : category
+
+      const folder: KeeperFolder = {
+        name: category,
+        path: currentPath,
+      }
+
+      // Decide whether to add children (higher chance at lower depths)
+      const chanceOfChildren = Math.max(0.1, 0.8 - depth * 0.1)
+      if (depth > 1 && faker.datatype.boolean(chanceOfChildren)) {
+        folder.children = generateNestedFolders(depth - 1, currentPath)
+      }
+
+      return folder
+    })
+  }
+
+  // Start with top-level folders
+  const numTopFolders = faker.number.int({ min: 2, max: 5 })
+  const selectedTopCategories = [...folderCategories].sort(() => 0.5 - Math.random()).slice(0, numTopFolders)
+
+  return selectedTopCategories.map((category) => {
+    const folder: KeeperFolder = {
+      name: category,
+      path: category,
+    }
+
+    // For top-level folders, use the predefined subcategories
+    if (maxDepth > 1 && subCategories[category]) {
+      const subCats = subCategories[category]
+      const numChildren = faker.number.int({ min: 1, max: Math.min(3, subCats.length) })
+      const selectedSubCats = [...subCats].sort(() => 0.5 - Math.random()).slice(0, numChildren)
+
+      folder.children = selectedSubCats.map((subCat) => {
+        const subFolder: KeeperFolder = {
+          name: subCat,
+          path: `${category}\\${subCat}`,
+        }
+
+        // For second-level folders, use predefined sub-subcategories if available
+        if (maxDepth > 2 && subSubCategories[subCat]) {
+          const subSubCats = subSubCategories[subCat]
+          const numSubChildren = faker.number.int({ min: 1, max: Math.min(3, subSubCats.length) })
+          const selectedSubSubCats = [...subSubCats].sort(() => 0.5 - Math.random()).slice(0, numSubChildren)
+
+          subFolder.children = selectedSubSubCats.map((subSubCat) => {
+            const subSubFolder: KeeperFolder = {
+              name: subSubCat,
+              path: `${category}\\${subCat}\\${subSubCat}`,
+            }
+
+            // For deeper nesting (beyond level 3), use the recursive function
+            if (maxDepth > 3) {
+              subSubFolder.children = generateNestedFolders(maxDepth - 3, subSubFolder.path)
+            }
+
+            return subSubFolder
+          })
+        }
+
+        return subFolder
+      })
+    }
+
+    return folder
+  })
+}
+
+// Also replace the generateSharedFolderStructure function with this improved version
+
+const generateSharedFolderStructure = (maxDepth = 2): KeeperSharedFolder[] => {
+  const sharedCategories = [
+    "Team Projects",
+    "Department Resources",
+    "Company Policies",
+    "Client Information",
+    "Vendor Access",
+    "Shared Services",
+  ]
+
+  const sharedSubCategories: Record<string, string[]> = {
+    "Team Projects": ["Active", "Archived", "Planning"],
+    "Department Resources": ["HR", "IT", "Finance", "Marketing"],
+    "Company Policies": ["Security", "HR", "IT", "General"],
+    "Client Information": ["Active", "Prospective", "Former"],
+    "Vendor Access": ["IT Services", "Office Supplies", "Consulting"],
+    "Shared Services": ["Software", "Subscriptions", "Accounts"],
+  }
+
+  // Categories for deeper levels
+  const deepSharedCategories = [
+    "Priority",
+    "Standard",
+    "Legacy",
+    "Restricted",
+    "Public",
+    "Internal",
+    "External",
+    "Temporary",
+    "Permanent",
+    "Regional",
+    "Global",
+    "Local",
+    "Division",
+    "Group",
+    "Team",
+  ]
+
+  // Recursive function to generate nested shared folders
+  const generateNestedSharedFolders = (depth: number, parentPath = ""): KeeperSharedFolder[] => {
+    if (depth <= 0) return []
+
+    const numFolders = faker.number.int({ min: 1, max: 3 })
+    const selectedCategories = [...deepSharedCategories].sort(() => 0.5 - Math.random()).slice(0, numFolders)
+
+    return selectedCategories.map((category) => {
+      const currentPath = parentPath ? `${parentPath}\\${category}` : category
+
+      const folder: KeeperSharedFolder = {
+        name: category,
+        path: currentPath,
+        can_edit: faker.datatype.boolean(),
+        can_share: faker.datatype.boolean(),
+      }
+
+      // Decide whether to add children (higher chance at lower depths)
+      const chanceOfChildren = Math.max(0.1, 0.7 - depth * 0.1)
+      if (depth > 1 && faker.datatype.boolean(chanceOfChildren)) {
+        folder.children = generateNestedSharedFolders(depth - 1, currentPath)
+      }
+
+      return folder
+    })
+  }
+
+  // Select a subset of top-level shared folders
+  const numSharedFolders = faker.number.int({ min: 1, max: 3 })
+  const selectedSharedCategories = [...sharedCategories].sort(() => 0.5 - Math.random()).slice(0, numSharedFolders)
+
+  return selectedSharedCategories.map((category) => {
+    const sharedFolder: KeeperSharedFolder = {
+      name: category,
+      path: category,
+      can_edit: faker.datatype.boolean(),
+      can_share: faker.datatype.boolean(),
+    }
+
+    // Add second level if applicable
+    if (maxDepth > 1 && sharedSubCategories[category]) {
+      const subCats = sharedSubCategories[category]
+      const numChildren = faker.number.int({ min: 1, max: Math.min(3, subCats.length) })
+      const selectedSubCats = [...subCats].sort(() => 0.5 - Math.random()).slice(0, numChildren)
+
+      sharedFolder.children = selectedSubCats.map((subCat) => {
+        const subFolder: KeeperSharedFolder = {
+          name: subCat,
+          path: `${category}\\${subCat}`,
+          can_edit: faker.datatype.boolean(),
+          can_share: faker.datatype.boolean(),
+        }
+
+        // For deeper nesting (beyond level 2), use the recursive function
+        if (maxDepth > 2) {
+          subFolder.children = generateNestedSharedFolders(maxDepth - 2, subFolder.path)
+        }
+
+        return subFolder
+      })
+    }
+
+    return sharedFolder
+  })
+}
+
+// Flatten folder structure for easier assignment to records
+const flattenFolderStructure = (folders: KeeperFolder[]): { name: string; path: string }[] => {
+  const result: { name: string; path: string }[] = []
+
+  const traverse = (folder: KeeperFolder, parentPath = "") => {
+    const currentPath = parentPath ? `${parentPath}\\${folder.name}` : folder.name
+    result.push({ name: folder.name, path: currentPath })
+
+    if (folder.children && folder.children.length > 0) {
+      folder.children.forEach((child) => traverse(child, currentPath))
+    }
+  }
+
+  folders.forEach((folder) => traverse(folder))
+  return result
+}
+
+const flattenSharedFolderStructure = (
+  folders: KeeperSharedFolder[],
+): { name: string; path: string; can_edit: boolean; can_share: boolean }[] => {
+  const result: { name: string; path: string; can_edit: boolean; can_share: boolean }[] = []
+
+  const traverse = (folder: KeeperSharedFolder, parentPath = "") => {
+    const currentPath = parentPath ? `${parentPath}\\${folder.name}` : folder.name
+    result.push({
+      name: folder.name,
+      path: currentPath,
+      can_edit: folder.can_edit,
+      can_share: folder.can_share,
+    })
+
+    if (folder.children && folder.children.length > 0) {
+      folder.children.forEach((child) => traverse(child, currentPath))
+    }
+  }
+
+  folders.forEach((folder) => traverse(folder))
+  return result
+}
+
+// Helper function to create Keeper items with nested folders
+const createKeeperItem = (number: number, useRealUrls: boolean, useNestedFolders: boolean): KeeperRecord[] => {
+  // Generate folder structure if using nested folders
+  const folderStructure = useNestedFolders ? generateFolderStructure() : []
+  const sharedFolderStructure = useNestedFolders ? generateSharedFolderStructure() : []
+
+  // Flatten folder structures for easier assignment
+  const flatFolders = useNestedFolders ? flattenFolderStructure(folderStructure) : []
+  const flatSharedFolders = useNestedFolders ? flattenSharedFolderStructure(sharedFolderStructure) : []
+
+  // Simple folders for non-nested case
+  const simpleFolders = ["Private Folder", "My Websites", "Social Media"]
+
   const items: KeeperRecord[] = []
   for (let i = 0; i < number; i++) {
-    const website = useRealUrls 
+    const website = useRealUrls
       ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
       : faker.internet.domainName()
+
+    let folderReferences: KeeperFolderReference[] = []
+
+    if (useNestedFolders) {
+      // Decide if this item goes in a regular folder, shared folder, or both
+      const folderType = faker.helpers.arrayElement(["regular", "shared", "both"])
+
+      if (folderType === "regular" || folderType === "both") {
+        // Pick a random folder from the flattened structure
+        if (flatFolders.length > 0) {
+          const randomFolder = faker.helpers.arrayElement(flatFolders)
+          folderReferences.push({
+            folder: randomFolder.name,
+            folder_path: randomFolder.path,
+          })
+        }
+      }
+
+      if (folderType === "shared" || folderType === "both") {
+        // Pick a random shared folder
+        if (flatSharedFolders.length > 0) {
+          const randomSharedFolder = faker.helpers.arrayElement(flatSharedFolders)
+          folderReferences.push({
+            shared_folder: randomSharedFolder.name,
+            shared_folder_path: randomSharedFolder.path,
+            can_edit: randomSharedFolder.can_edit,
+            can_share: randomSharedFolder.can_share,
+          })
+        }
+      }
+
+      // If no folders were assigned (empty structures), assign a default
+      if (folderReferences.length === 0) {
+        folderReferences.push({ folder: "Default" })
+      }
+    } else {
+      // Use simple folder structure
+      folderReferences = [
+        { folder: faker.helpers.arrayElement(simpleFolders) },
+        ...(Math.random() > 0.5
+          ? [
+              {
+                shared_folder: "Shared Folder",
+                can_edit: faker.datatype.boolean(),
+                can_share: faker.datatype.boolean(),
+              },
+            ]
+          : []),
+      ]
+    }
+
     const item: KeeperRecord = {
       title: website + " Login",
       login: faker.internet.userName(),
@@ -306,16 +705,9 @@ const createKeeperItem = (number: number, useRealUrls: boolean): KeeperRecord[] 
         "Security Group": faker.helpers.arrayElement(["Private", "Public"]),
         "IP Address": faker.internet.ip(),
         "Favorite Food": faker.word.noun(),
-        "$oneTimeCode": `otpauth://totp/Example:${faker.internet.email()}?secret=${generateTOTPSecret()}&issuer=Example&algorithm=SHA1&digits=6&period=30`
+        $oneTimeCode: `otpauth://totp/Example:${faker.internet.email()}?secret=${generateTOTPSecret()}&issuer=Example&algorithm=SHA1&digits=6&period=30`,
       },
-      folders: [
-        { folder: faker.helpers.arrayElement(["Private Folder", "My Websites", "Social Media"]) },
-        ...(Math.random() > 0.5 ? [{
-          shared_folder: "Shared Folder",
-          can_edit: faker.datatype.boolean(),
-          can_share: faker.datatype.boolean()
-        }] : [])
-      ]
+      folders: folderReferences,
     }
     items.push(item)
   }
@@ -327,106 +719,156 @@ export default function Component() {
   const [secureNoteCount, setSecureNoteCount] = useState(10)
   const [creditCardCount, setCreditCardCount] = useState(10)
   const [identityCount, setIdentityCount] = useState(10)
-  const [vaultType, setVaultType] = useState<'individual' | 'org'>('individual')
-  const [vaultFormat, setVaultFormat] = useState('bitwarden')
+  const [vaultType, setVaultType] = useState<"individual" | "org">("individual")
+  const [vaultFormat, setVaultFormat] = useState("bitwarden")
   const [useRealUrls, setUseRealUrls] = useState(false)
   const [useCollections, setUseCollections] = useState(false)
   const [distributeItems, setDistributeItems] = useState(false)
+  const [useNestedFolders, setUseNestedFolders] = useState(false)
+  const [useRandomDepthNesting, setUseRandomDepthNesting] = useState(false)
   const [generatedData, setGeneratedData] = useState("")
 
   const generateVault = () => {
-    if (vaultFormat === 'bitwarden') {
-      if (vaultType === 'individual') {
+    if (vaultFormat === "bitwarden") {
+      if (vaultType === "individual") {
         const vault: BitwardenVault = { folders: [], items: [] }
         vault.items = [
           ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls, [], false),
           ...createBitwardenItem("objType2", secureNoteCount, vaultType, useRealUrls, [], false),
           ...createBitwardenItem("objType3", creditCardCount, vaultType, useRealUrls, [], false),
-          ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls, [], false)
+          ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls, [], false),
         ]
         setGeneratedData(JSON.stringify(vault, null, 2))
       } else {
         const orgVault: BitwardenOrgVault = { collections: [], items: [] }
         const orgId = faker.string.uuid()
         if (useCollections) {
-          orgVault.collections = businessDepartments.map(dept => ({
+          orgVault.collections = businessDepartments.map((dept) => ({
             id: faker.string.uuid(),
             organizationId: orgId,
             name: dept,
-            externalId: null
+            externalId: null,
           }))
         }
         orgVault.items = [
           ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls, orgVault.collections, distributeItems),
-          ...createBitwardenItem("objType2", secureNoteCount, vaultType, useRealUrls, orgVault.collections, distributeItems),
-          ...createBitwardenItem("objType3", creditCardCount, vaultType, useRealUrls, orgVault.collections, distributeItems),
-          ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls, orgVault.collections, distributeItems)
+          ...createBitwardenItem(
+            "objType2",
+            secureNoteCount,
+            vaultType,
+            useRealUrls,
+            orgVault.collections,
+            distributeItems,
+          ),
+          ...createBitwardenItem(
+            "objType3",
+            creditCardCount,
+            vaultType,
+            useRealUrls,
+            orgVault.collections,
+            distributeItems,
+          ),
+          ...createBitwardenItem(
+            "objType4",
+            identityCount,
+            vaultType,
+            useRealUrls,
+            orgVault.collections,
+            distributeItems,
+          ),
         ]
         setGeneratedData(JSON.stringify(orgVault, null, 2))
       }
-    } else if (vaultFormat === 'lastpass') {
+    } else if (vaultFormat === "lastpass") {
       const items = createLastPassItem(loginCount, useRealUrls)
       setGeneratedData(JSON.stringify(items, null, 2))
-    } else if (vaultFormat === 'keeper') {
-      const vault: KeeperVault = { records: createKeeperItem(loginCount, useRealUrls) }
+    } else if (vaultFormat === "keeper") {
+      // Update the generateVault function to use more extreme random depths when enabled
+      // Find this section in the generateVault function:
+
+      // Create folder structure if using nested folders
+      const maxDepth = useNestedFolders ? (useRandomDepthNesting ? faker.number.int({ min: 4, max: 10 }) : 3) : 1
+
+      const folderStructure = useNestedFolders ? generateFolderStructure(maxDepth) : []
+      const sharedFolderStructure = useNestedFolders ? generateSharedFolderStructure(Math.min(maxDepth, 6)) : []
+
+      const vault: KeeperVault = {
+        records: createKeeperItem(loginCount, useRealUrls, useNestedFolders),
+      }
+
+      // Add folder structure to vault if using nested folders
+      if (useNestedFolders) {
+        vault.folders = folderStructure
+        vault.shared_folders = sharedFolderStructure
+      }
+
       setGeneratedData(JSON.stringify(vault, null, 2))
     }
   }
 
-  const downloadData = (format: 'json' | 'csv' = 'json') => {
+  const downloadData = (format = "json") => {
     let content: string
     let filename: string
     let type: string
 
-    if (vaultFormat === 'bitwarden') {
+    if (vaultFormat === "bitwarden") {
       content = generatedData
       filename = `${vaultType}_${vaultFormat}_vault.json`
-      type = 'application/json'
-    } else if (vaultFormat === 'lastpass') {
+      type = "application/json"
+    } else if (vaultFormat === "lastpass") {
       // Convert JSON to CSV
       const items: LastPassItem[] = JSON.parse(generatedData)
-      const header = 'url,username,password,extra,name,grouping,totp\n'
+      const header = "url,username,password,extra,name,grouping,totp\n"
       const csvContent = items
         .map(
           (item) =>
-            `${item.url},${item.username},${item.password},${item.extra},${item.name},${item.grouping},${item.totp}`
+            `${item.url},${item.username},${item.password},${item.extra},${item.name},${item.grouping},${item.totp}`,
         )
-        .join('\n')
+        .join("\n")
       content = header + csvContent
-      filename = 'lastpass_vault_export.csv'
-      type = 'text/csv'
-    } else if (vaultFormat === 'keeper') {
-      if (format === 'json') {
+      filename = "lastpass_vault_export.csv"
+      type = "text/csv"
+    } else if (vaultFormat === "keeper") {
+      if (format === "json") {
         content = generatedData
-        filename = 'keeper_vault_export.json'
-        type = 'application/json'
+        filename = "keeper_vault_export.json"
+        type = "application/json"
       } else {
-        // Convert JSON to CSV
+        // Convert JSON to CSV with support for nested folders
         const vault: KeeperVault = JSON.parse(generatedData)
-        const header = 'Folder,Title,Login,Password,Website Address,Notes,Shared Folder,Custom Fields\n'
+        const header = "Folder,Title,Login,Password,Website Address,Notes,Shared Folder,Custom Fields\n"
         const csvContent = vault.records
           .map((record) => {
-            const folder = record.folders.find((f) => 'folder' in f)?.folder || ''
-            const sharedFolder = record.folders.find((f) => 'shared_folder' in f)?.shared_folder || ''
+            // Get folder information, preferring path if available
+            const folderRef = record.folders.find((f) => "folder" in f)
+            const folder = folderRef ? folderRef.folder_path || folderRef.folder || "" : ""
+
+            // Get shared folder information, preferring path if available
+            const sharedFolderRef = record.folders.find((f) => "shared_folder" in f)
+            const sharedFolder = sharedFolderRef
+              ? sharedFolderRef.shared_folder_path || sharedFolderRef.shared_folder || ""
+              : ""
+
             const customFields = Object.entries(record.custom_fields)
               .map(([key, value]) => `${key}: ${value}`)
-              .join('; ')
+              .join("; ")
+
             return `"${folder}","${record.title}","${record.login}","${record.password}","${record.login_url}","${record.notes}","${sharedFolder}","${customFields}"`
           })
-          .join('\n')
+          .join("\n")
         content = header + csvContent
-        filename = 'keeper_vault_export.csv'
-        type = 'text/csv'
+        filename = "keeper_vault_export.csv"
+        type = "text/csv"
       }
     } else {
       // Handle unexpected vault format
-      console.error('Unexpected vault format')
+      console.error("Unexpected vault format")
       return
     }
 
     const blob = new Blob([content], { type })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
+    const a = document.createElement("a")
     a.href = url
     a.download = filename
     document.body.appendChild(a)
@@ -455,10 +897,10 @@ export default function Component() {
             </SelectContent>
           </Select>
         </div>
-        {vaultFormat === 'bitwarden' && (
+        {vaultFormat === "bitwarden" && (
           <div>
             <Label htmlFor="vaultType">Vault Type</Label>
-            <Select onValueChange={(value: 'individual' | 'org') => setVaultType(value)} defaultValue={vaultType}>
+            <Select onValueChange={(value: "individual" | "org") => setVaultType(value)} defaultValue={vaultType}>
               <SelectTrigger id="vaultType">
                 <SelectValue placeholder="Select vault type" />
               </SelectTrigger>
@@ -471,82 +913,113 @@ export default function Component() {
         )}
         <div>
           <Label htmlFor="loginCount">Number of Logins</Label>
-          <Input 
-            id="loginCount" 
-            type="number" 
-            value={loginCount} 
-            onChange={(e) => setLoginCount(parseInt(e.target.value))} 
+          <Input
+            id="loginCount"
+            type="number"
+            value={loginCount}
+            onChange={(e) => setLoginCount(Number.parseInt(e.target.value))}
             min="0"
             aria-describedby="loginCount-description"
           />
-          <p id="loginCount-description" className="text-sm text-muted-foreground">Enter the number of login items to generate (includes random TOTP keys)</p>
+          <p id="loginCount-description" className="text-sm text-muted-foreground">
+            Enter the number of login items to generate (includes random TOTP keys)
+          </p>
         </div>
-        {vaultFormat === 'bitwarden' && (
+        {vaultFormat !== "lastpass" && (
           <>
             <div>
               <Label htmlFor="secureNoteCount">Number of Secure Notes</Label>
-              <Input 
-                id="secureNoteCount" 
-                type="number" 
-                value={secureNoteCount} 
-                onChange={(e) => setSecureNoteCount(parseInt(e.target.value))} 
+              <Input
+                id="secureNoteCount"
+                type="number"
+                value={secureNoteCount}
+                onChange={(e) => setSecureNoteCount(Number.parseInt(e.target.value))}
                 min="0"
                 aria-describedby="secureNoteCount-description"
               />
-              <p id="secureNoteCount-description" className="text-sm text-muted-foreground">Enter the number of secure note items to generate</p>
+              <p id="secureNoteCount-description" className="text-sm text-muted-foreground">
+                Enter the number of secure note items to generate
+              </p>
             </div>
             <div>
               <Label htmlFor="creditCardCount">Number of Credit Cards</Label>
-              <Input 
-                id="creditCardCount" 
-                type="number" 
-                value={creditCardCount} 
-                onChange={(e) => setCreditCardCount(parseInt(e.target.value))} 
+              <Input
+                id="creditCardCount"
+                type="number"
+                value={creditCardCount}
+                onChange={(e) => setCreditCardCount(Number.parseInt(e.target.value))}
                 min="0"
                 aria-describedby="creditCardCount-description"
               />
-              <p id="creditCardCount-description" className="text-sm text-muted-foreground">Enter the number of credit card items to generate</p>
+              <p id="creditCardCount-description" className="text-sm text-muted-foreground">
+                Enter the number of credit card items to generate
+              </p>
             </div>
             <div>
               <Label htmlFor="identityCount">Number of Identities</Label>
-              <Input 
-                id="identityCount" 
-                type="number" 
-                value={identityCount} 
-                onChange={(e) => setIdentityCount(parseInt(e.target.value))} 
+              <Input
+                id="identityCount"
+                type="number"
+                value={identityCount}
+                onChange={(e) => setIdentityCount(Number.parseInt(e.target.value))}
                 min="0"
                 aria-describedby="identityCount-description"
               />
-              <p id="identityCount-description" className="text-sm text-muted-foreground">Enter the number of identity items to generate</p>
+              <p id="identityCount-description" className="text-sm text-muted-foreground">
+                Enter the number of identity items to generate
+              </p>
             </div>
           </>
         )}
         <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="useRealUrls" 
-            checked={useRealUrls} 
+          <Checkbox
+            id="useRealUrls"
+            checked={useRealUrls}
             onCheckedChange={(checked) => setUseRealUrls(checked as boolean)}
           />
           <Label htmlFor="useRealUrls">Use real website URLs for logins</Label>
         </div>
-        {vaultFormat === 'bitwarden' && vaultType === 'org' && (
+        {vaultFormat === "bitwarden" && vaultType === "org" && (
           <>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="useCollections" 
-                checked={useCollections} 
+              <Checkbox
+                id="useCollections"
+                checked={useCollections}
                 onCheckedChange={(checked) => setUseCollections(checked as boolean)}
               />
               <Label htmlFor="useCollections">Create collections for business departments</Label>
             </div>
             {useCollections && (
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="distributeItems" 
-                  checked={distributeItems} 
+                <Checkbox
+                  id="distributeItems"
+                  checked={distributeItems}
                   onCheckedChange={(checked) => setDistributeItems(checked as boolean)}
                 />
                 <Label htmlFor="distributeItems">Assign items to collections</Label>
+              </div>
+            )}
+          </>
+        )}
+        {vaultFormat === "keeper" && (
+          <>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="useNestedFolders"
+                checked={useNestedFolders}
+                onCheckedChange={(checked) => setUseNestedFolders(checked as boolean)}
+              />
+              <Label htmlFor="useNestedFolders">Use nested folder structure</Label>
+            </div>
+
+            {useNestedFolders && (
+              <div className="flex items-center space-x-2 ml-6">
+                <Checkbox
+                  id="useRandomDepthNesting"
+                  checked={useRandomDepthNesting}
+                  onCheckedChange={(checked) => setUseRandomDepthNesting(checked as boolean)}
+                />
+                <Label htmlFor="useRandomDepthNesting">Enable deeper random nesting (up to 8 levels)</Label>
               </div>
             )}
           </>
@@ -556,17 +1029,15 @@ export default function Component() {
       {generatedData && (
         <div className="mt-4">
           <h2 className="text-xl font-bold mb-2">Generated Vault Data:</h2>
-          <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96">
-            {generatedData}
-          </pre>
+          <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96">{generatedData}</pre>
           <div className="mt-4 space-x-4">
-            {vaultFormat === 'keeper' ? (
+            {vaultFormat === "keeper" ? (
               <>
-                <Button onClick={() => downloadData('json')}>
+                <Button onClick={() => downloadData("json")}>
                   <Download className="mr-2 h-4 w-4" />
                   Download JSON
                 </Button>
-                <Button onClick={() => downloadData('csv')}>
+                <Button onClick={() => downloadData("csv")}>
                   <Download className="mr-2 h-4 w-4" />
                   Download CSV
                 </Button>
@@ -574,7 +1045,7 @@ export default function Component() {
             ) : (
               <Button onClick={() => downloadData()}>
                 <Download className="mr-2 h-4 w-4" />
-                Download {vaultFormat === 'lastpass' ? 'CSV' : 'JSON'}
+                Download {vaultFormat === "lastpass" ? "CSV" : "JSON"}
               </Button>
             )}
           </div>
@@ -583,3 +1054,4 @@ export default function Component() {
     </div>
   )
 }
+
