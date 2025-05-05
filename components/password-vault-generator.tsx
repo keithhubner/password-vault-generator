@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Download, Lock } from "lucide-react"
+import { Slider } from "@/components/ui/slider"
 
 // Bitwarden interfaces
 interface BaseItem {
@@ -143,6 +144,85 @@ interface KeeperVault {
   records: KeeperRecord[]
   folders?: KeeperFolder[] // Add folder structure to vault
   shared_folders?: KeeperSharedFolder[] // Add shared folder structure to vault
+}
+
+// Common weak passwords for generating test data
+const commonWeakPasswords = [
+  "password",
+  "123456",
+  "qwerty",
+  "abc123",
+  "letmein",
+  "monkey",
+  "welcome",
+  "admin",
+  "dragon",
+  "sunshine",
+  "princess",
+  "football",
+  "baseball",
+  "master",
+  "shadow",
+  "superman",
+  "trustno1",
+  "iloveyou",
+  "passw0rd",
+  "p@ssw0rd",
+  "welcome1",
+  "Password1",
+  "qwerty123",
+  "123qwe",
+  "1q2w3e",
+  "asdf1234",
+  "zxcvbn",
+  "password123",
+  "12345678",
+  "111111",
+  "1234567890",
+]
+
+// Function to generate a weak password
+const generateWeakPassword = (): string => {
+  const weakPasswordType = faker.helpers.arrayElement([
+    "common", // Use a common weak password
+    "short", // Generate a short password
+    "simple", // Generate a simple pattern
+    "sequential", // Generate sequential characters
+    "repeated", // Generate repeated characters
+  ])
+
+  switch (weakPasswordType) {
+    case "common":
+      return faker.helpers.arrayElement(commonWeakPasswords)
+    case "short":
+      return faker.internet.password({ length: faker.number.int({ min: 3, max: 6 }) })
+    case "simple":
+      // Simple lowercase letters only
+      return faker.internet.password({
+        length: faker.number.int({ min: 6, max: 8 }),
+        memorable: true,
+        pattern: /[a-z]/,
+      })
+    case "sequential":
+      // Sequential characters like "abcdef" or "123456"
+      const seqLength = faker.number.int({ min: 5, max: 8 })
+      const seqStart = faker.number.int({ min: 0, max: 9 })
+      if (faker.datatype.boolean()) {
+        // Numeric sequence
+        return Array.from({ length: seqLength }, (_, i) => (seqStart + i) % 10).join("")
+      } else {
+        // Alphabetic sequence
+        const startChar = "a".charCodeAt(0) + faker.number.int({ min: 0, max: 20 })
+        return Array.from({ length: seqLength }, (_, i) => String.fromCharCode(startChar + i)).join("")
+      }
+    case "repeated":
+      // Repeated characters like "aaaaa" or "11111"
+      const repChar = faker.helpers.arrayElement(["a", "1", "x", "0", "q", "z"])
+      const repLength = faker.number.int({ min: 4, max: 8 })
+      return repChar.repeat(repLength)
+    default:
+      return faker.helpers.arrayElement(commonWeakPasswords)
+  }
 }
 
 // Helper function to generate random TOTP secret key
@@ -291,6 +371,9 @@ const createBitwardenItem = (
   useRealUrls: boolean,
   collections: { id: string; name: string }[],
   distributeItems: boolean,
+  weakPasswordPercentage: number,
+  passwordReusePercentage: number,
+  passwordPool: string[],
 ): BitwardenVaultItem[] => {
   const items: BitwardenVaultItem[] = []
 
@@ -327,6 +410,27 @@ const createBitwardenItem = (
           ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
           : faker.internet.domainName()
 
+        // Determine password strategy
+        let password: string
+
+        // First check if we should reuse a password
+        if (passwordPool.length > 0 && faker.number.int({ min: 1, max: 100 }) <= passwordReusePercentage) {
+          // Reuse a password from the pool
+          password = faker.helpers.arrayElement(passwordPool)
+        } else {
+          // Generate a new password (weak or strong)
+          if (faker.number.int({ min: 1, max: 100 }) <= weakPasswordPercentage) {
+            password = generateWeakPassword()
+          } else {
+            password = faker.internet.password()
+          }
+
+          // Add new password to the pool if it's not already there
+          if (passwordReusePercentage > 0 && !passwordPool.includes(password)) {
+            passwordPool.push(password)
+          }
+        }
+
         item = {
           ...baseItem,
           type: 1,
@@ -340,7 +444,7 @@ const createBitwardenItem = (
               },
             ],
             username: faker.internet.userName(),
-            password: faker.internet.password(),
+            password: password,
             totp: generateTOTPSecret(),
           },
           passwordHistory: [
@@ -415,16 +519,44 @@ const createBitwardenItem = (
 }
 
 // Helper function to create LastPass items
-const createLastPassItem = (number: number, useRealUrls: boolean): LastPassItem[] => {
+const createLastPassItem = (
+  number: number,
+  useRealUrls: boolean,
+  weakPasswordPercentage: number,
+  passwordReusePercentage: number,
+  passwordPool: string[],
+): LastPassItem[] => {
   const items: LastPassItem[] = []
   for (let i = 0; i < number; i++) {
     const website = useRealUrls
       ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
       : faker.internet.domainName()
+
+    // Determine password strategy
+    let password: string
+
+    // First check if we should reuse a password
+    if (passwordPool.length > 0 && faker.number.int({ min: 1, max: 100 }) <= passwordReusePercentage) {
+      // Reuse a password from the pool
+      password = faker.helpers.arrayElement(passwordPool)
+    } else {
+      // Generate a new password (weak or strong)
+      if (faker.number.int({ min: 1, max: 100 }) <= weakPasswordPercentage) {
+        password = generateWeakPassword()
+      } else {
+        password = faker.internet.password()
+      }
+
+      // Add new password to the pool if it's not already there
+      if (passwordReusePercentage > 0 && !passwordPool.includes(password)) {
+        passwordPool.push(password)
+      }
+    }
+
     const item: LastPassItem = {
       url: `https://www.${website}`,
       username: faker.internet.email(),
-      password: faker.internet.password(),
+      password: password,
       extra: faker.lorem.paragraph(),
       name: website + " Login",
       grouping: "",
@@ -728,7 +860,14 @@ const flattenSharedFolderStructure = (
 }
 
 // Helper function to create Keeper items with nested folders
-const createKeeperItem = (number: number, useRealUrls: boolean, useNestedFolders: boolean): KeeperRecord[] => {
+const createKeeperItem = (
+  number: number,
+  useRealUrls: boolean,
+  useNestedFolders: boolean,
+  weakPasswordPercentage: number,
+  passwordReusePercentage: number,
+  passwordPool: string[],
+): KeeperRecord[] => {
   // Generate folder structure if using nested folders
   const folderStructure = useNestedFolders ? generateFolderStructure() : []
   const sharedFolderStructure = useNestedFolders ? generateSharedFolderStructure() : []
@@ -745,6 +884,27 @@ const createKeeperItem = (number: number, useRealUrls: boolean, useNestedFolders
     const website = useRealUrls
       ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
       : faker.internet.domainName()
+
+    // Determine password strategy
+    let password: string
+
+    // First check if we should reuse a password
+    if (passwordPool.length > 0 && faker.number.int({ min: 1, max: 100 }) <= passwordReusePercentage) {
+      // Reuse a password from the pool
+      password = faker.helpers.arrayElement(passwordPool)
+    } else {
+      // Generate a new password (weak or strong)
+      if (faker.number.int({ min: 1, max: 100 }) <= weakPasswordPercentage) {
+        password = generateWeakPassword()
+      } else {
+        password = faker.internet.password()
+      }
+
+      // Add new password to the pool if it's not already there
+      if (passwordReusePercentage > 0 && !passwordPool.includes(password)) {
+        passwordPool.push(password)
+      }
+    }
 
     let folderReferences: KeeperFolderReference[] = []
 
@@ -799,7 +959,7 @@ const createKeeperItem = (number: number, useRealUrls: boolean, useNestedFolders
     const item: KeeperRecord = {
       title: website + " Login",
       login: faker.internet.userName(),
-      password: faker.internet.password(),
+      password: password,
       login_url: `https://www.${website}`,
       notes: faker.lorem.paragraph(),
       custom_fields: {
@@ -937,20 +1097,76 @@ export default function Component() {
   const [topLevelCollectionCount, setTopLevelCollectionCount] = useState(5)
   const [collectionNestingDepth, setCollectionNestingDepth] = useState(2)
   const [totalCollectionCount, setTotalCollectionCount] = useState(20)
-
-  // Generate hierarchical collection structure with proper parent-child relationships
-
-  // Ensure all parent paths exist in the collection list
+  const [useWeakPasswords, setUseWeakPasswords] = useState(false)
+  const [weakPasswordPercentage, setWeakPasswordPercentage] = useState(20)
+  const [reusePasswords, setReusePasswords] = useState(false)
+  const [passwordReusePercentage, setPasswordReusePercentage] = useState(30)
 
   const generateVault = () => {
+    // Create a pool of passwords for reuse if enabled
+    const passwordPool: string[] = []
+
+    if (reusePasswords) {
+      // Generate a pool of passwords (both strong and weak if enabled)
+      const poolSize = Math.max(5, Math.floor(loginCount * 0.3)) // Create a reasonable pool size
+
+      for (let i = 0; i < poolSize; i++) {
+        if (useWeakPasswords && faker.number.int({ min: 1, max: 100 }) <= weakPasswordPercentage) {
+          passwordPool.push(generateWeakPassword())
+        } else {
+          passwordPool.push(faker.internet.password())
+        }
+      }
+    }
+
     if (vaultFormat === "bitwarden") {
       if (vaultType === "individual") {
         const vault: BitwardenVault = { folders: [], items: [] }
         vault.items = [
-          ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls, [], false),
-          ...createBitwardenItem("objType2", secureNoteCount, vaultType, useRealUrls, [], false),
-          ...createBitwardenItem("objType3", creditCardCount, vaultType, useRealUrls, [], false),
-          ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls, [], false),
+          ...createBitwardenItem(
+            "objType1",
+            loginCount,
+            vaultType,
+            useRealUrls,
+            [],
+            false,
+            useWeakPasswords ? weakPasswordPercentage : 0,
+            reusePasswords ? passwordReusePercentage : 0,
+            passwordPool,
+          ),
+          ...createBitwardenItem(
+            "objType2",
+            secureNoteCount,
+            vaultType,
+            useRealUrls,
+            [],
+            false,
+            useWeakPasswords ? weakPasswordPercentage : 0,
+            reusePasswords ? passwordReusePercentage : 0,
+            passwordPool,
+          ),
+          ...createBitwardenItem(
+            "objType3",
+            creditCardCount,
+            vaultType,
+            useRealUrls,
+            [],
+            false,
+            useWeakPasswords ? weakPasswordPercentage : 0,
+            reusePasswords ? passwordReusePercentage : 0,
+            passwordPool,
+          ),
+          ...createBitwardenItem(
+            "objType4",
+            identityCount,
+            vaultType,
+            useRealUrls,
+            [],
+            false,
+            useWeakPasswords ? weakPasswordPercentage : 0,
+            reusePasswords ? passwordReusePercentage : 0,
+            passwordPool,
+          ),
         ]
         setGeneratedData(JSON.stringify(vault, null, 2))
       } else {
@@ -996,7 +1212,17 @@ export default function Component() {
         }
 
         orgVault.items = [
-          ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls, orgVault.collections, distributeItems),
+          ...createBitwardenItem(
+            "objType1",
+            loginCount,
+            vaultType,
+            useRealUrls,
+            orgVault.collections,
+            distributeItems,
+            useWeakPasswords ? weakPasswordPercentage : 0,
+            reusePasswords ? passwordReusePercentage : 0,
+            passwordPool,
+          ),
           ...createBitwardenItem(
             "objType2",
             secureNoteCount,
@@ -1004,6 +1230,9 @@ export default function Component() {
             useRealUrls,
             orgVault.collections,
             distributeItems,
+            useWeakPasswords ? weakPasswordPercentage : 0,
+            reusePasswords ? passwordReusePercentage : 0,
+            passwordPool,
           ),
           ...createBitwardenItem(
             "objType3",
@@ -1012,6 +1241,9 @@ export default function Component() {
             useRealUrls,
             orgVault.collections,
             distributeItems,
+            useWeakPasswords ? weakPasswordPercentage : 0,
+            reusePasswords ? passwordReusePercentage : 0,
+            passwordPool,
           ),
           ...createBitwardenItem(
             "objType4",
@@ -1020,12 +1252,21 @@ export default function Component() {
             useRealUrls,
             orgVault.collections,
             distributeItems,
+            useWeakPasswords ? weakPasswordPercentage : 0,
+            reusePasswords ? passwordReusePercentage : 0,
+            passwordPool,
           ),
         ]
         setGeneratedData(JSON.stringify(orgVault, null, 2))
       }
     } else if (vaultFormat === "lastpass") {
-      const items = createLastPassItem(loginCount, useRealUrls)
+      const items = createLastPassItem(
+        loginCount,
+        useRealUrls,
+        useWeakPasswords ? weakPasswordPercentage : 0,
+        reusePasswords ? passwordReusePercentage : 0,
+        passwordPool,
+      )
       setGeneratedData(JSON.stringify(items, null, 2))
     } else if (vaultFormat === "keeper") {
       // Create folder structure if using nested folders
@@ -1035,7 +1276,14 @@ export default function Component() {
       const sharedFolderStructure = useNestedFolders ? generateSharedFolderStructure(Math.min(maxDepth, 6)) : []
 
       const vault: KeeperVault = {
-        records: createKeeperItem(loginCount, useRealUrls, useNestedFolders),
+        records: createKeeperItem(
+          loginCount,
+          useRealUrls,
+          useNestedFolders,
+          useWeakPasswords ? weakPasswordPercentage : 0,
+          reusePasswords ? passwordReusePercentage : 0,
+          passwordPool,
+        ),
       }
 
       // Add folder structure to vault if using nested folders
@@ -1213,6 +1461,70 @@ export default function Component() {
             </div>
           </>
         )}
+        <div className="space-y-4 border p-4 rounded-md">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="useWeakPasswords"
+              checked={useWeakPasswords}
+              onCheckedChange={(checked) => setUseWeakPasswords(checked as boolean)}
+            />
+            <Label htmlFor="useWeakPasswords">Include weak passwords</Label>
+          </div>
+
+          {useWeakPasswords && (
+            <div>
+              <Label htmlFor="weakPasswordPercentage">Weak Password Percentage</Label>
+              <div className="flex items-center gap-4">
+                <Slider
+                  id="weakPasswordPercentage"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={[weakPasswordPercentage]}
+                  onValueChange={(value) => setWeakPasswordPercentage(value[0])}
+                  className="flex-1"
+                />
+                <span className="w-12 text-center">{weakPasswordPercentage}%</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Percentage of passwords that will be generated as weak/common passwords for testing password strength
+                reports
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4 border p-4 rounded-md">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="reusePasswords"
+              checked={reusePasswords}
+              onCheckedChange={(checked) => setReusePasswords(checked as boolean)}
+            />
+            <Label htmlFor="reusePasswords">Reuse passwords across multiple sites</Label>
+          </div>
+
+          {reusePasswords && (
+            <div>
+              <Label htmlFor="passwordReusePercentage">Password Reuse Percentage</Label>
+              <div className="flex items-center gap-4">
+                <Slider
+                  id="passwordReusePercentage"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={[passwordReusePercentage]}
+                  onValueChange={(value) => setPasswordReusePercentage(value[0])}
+                  className="flex-1"
+                />
+                <span className="w-12 text-center">{passwordReusePercentage}%</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Percentage of logins that will reuse passwords from other sites for testing password reuse reports
+              </p>
+            </div>
+          )}
+        </div>
         <div className="flex items-center space-x-2">
           <Checkbox
             id="useRealUrls"
@@ -1287,7 +1599,7 @@ export default function Component() {
                         aria-describedby="collectionNestingDepth-description"
                       />
                       <p id="collectionNestingDepth-description" className="text-sm text-muted-foreground">
-                        Enter the maximum depth of nested collections (e.g., 3 = Parent\Child\Grandchild)
+                        Enter the maximum depth of nested collections (e.g., 3 = Parent/Child/Grandchild)
                       </p>
                     </div>
                   </>
