@@ -161,7 +161,108 @@ const businessDepartments = [
   "Research & Development",
   "Sales",
   "Customer Support",
+  "Legal",
+  "Procurement",
+  "Quality Assurance",
+  "Product Management",
+  "Business Development",
+  "Public Relations",
+  "Customer Success",
+  "Administration",
+  "Facilities",
+  "Security",
+  "Engineering",
 ]
+
+// Additional business functions for generating more unique collection names
+const businessFunctions = [
+  "Strategy",
+  "Analytics",
+  "Compliance",
+  "Risk Management",
+  "Training",
+  "Innovation",
+  "Digital Transformation",
+  "Corporate Communications",
+  "Investor Relations",
+  "Supply Chain",
+  "Logistics",
+  "Manufacturing",
+  "Design",
+  "User Experience",
+  "Data Science",
+  "Artificial Intelligence",
+  "Cloud Infrastructure",
+  "Mobile Development",
+  "Web Development",
+  "DevOps",
+  "Customer Experience",
+  "Brand Management",
+  "Social Media",
+  "Content Creation",
+  "Events",
+  "Partnerships",
+  "Mergers & Acquisitions",
+  "Accounting",
+  "Payroll",
+  "Benefits",
+  "Recruitment",
+  "Talent Development",
+  "Internal Communications",
+  "Corporate Social Responsibility",
+  "Sustainability",
+]
+
+// Business regions for even more collection name variations
+const businessRegions = [
+  "North America",
+  "South America",
+  "Europe",
+  "Asia Pacific",
+  "Middle East",
+  "Africa",
+  "Global",
+  "Eastern",
+  "Western",
+  "Northern",
+  "Southern",
+  "Central",
+]
+
+// Generate unique collection names based on count
+const generateUniqueCollectionNames = (count: number): string[] => {
+  // Start with the base business departments
+  let collections = [...businessDepartments]
+
+  // If we need more, add business functions
+  if (count > collections.length) {
+    collections = collections.concat(businessFunctions)
+  }
+
+  // If we still need more, create combinations
+  if (count > collections.length) {
+    // Create region-department combinations
+    const regionDeptCombos = []
+    for (const region of businessRegions) {
+      for (const dept of businessDepartments.slice(0, 5)) {
+        // Take just a few departments to avoid too many combinations
+        regionDeptCombos.push(`${region} ${dept}`)
+      }
+    }
+    collections = collections.concat(regionDeptCombos)
+  }
+
+  // If we STILL need more, add numbered departments
+  if (count > collections.length) {
+    const neededMore = count - collections.length
+    for (let i = 1; i <= neededMore; i++) {
+      collections.push(`Department ${i}`)
+    }
+  }
+
+  // Shuffle and take the requested count
+  return collections.sort(() => 0.5 - Math.random()).slice(0, count)
+}
 
 // Sample popular websites for realistic URLs
 const popularWebsites = [
@@ -714,6 +815,110 @@ const createKeeperItem = (number: number, useRealUrls: boolean, useNestedFolders
   return items
 }
 
+// Update the generateHierarchicalCollections function to use forward slashes for Bitwarden
+const generateHierarchicalCollections = (topLevelCount: number, maxDepth: number, totalCount: number): string[] => {
+  // Ensure top level count doesn't exceed total
+  topLevelCount = Math.min(topLevelCount, totalCount)
+
+  // Start with top-level departments
+  const topLevelNames = generateUniqueCollectionNames(topLevelCount)
+
+  // Set to track all collection paths to avoid duplicates
+  const allCollections = new Set<string>(topLevelNames)
+
+  // If we've already hit our total or max depth is 1, return early
+  if (allCollections.size >= totalCount || maxDepth <= 1) {
+    return Array.from(allCollections).slice(0, totalCount)
+  }
+
+  // For each level of nesting, distribute the remaining collections
+  let currentLevel = [...topLevelNames]
+  let remainingCount = totalCount - topLevelCount
+
+  // For each depth level beyond the top level
+  for (let depth = 1; depth < maxDepth && remainingCount > 0 && currentLevel.length > 0; depth++) {
+    const nextLevel: string[] = []
+
+    // Calculate how many children to create at this level
+    const childrenPerParent = Math.max(1, Math.floor(remainingCount / currentLevel.length))
+
+    // For each parent at the current level
+    for (let i = 0; i < currentLevel.length && remainingCount > 0; i++) {
+      const parentPath = currentLevel[i]
+      const parentBaseName = parentPath.split("/").pop() || parentPath
+
+      // Determine how many children for this specific parent
+      const actualChildrenForThisParent = Math.min(childrenPerParent, remainingCount)
+
+      if (actualChildrenForThisParent <= 0) continue
+
+      // Get appropriate child names based on the parent
+      let childNames: string[] = []
+
+      // Try to get contextual child names if possible
+      if (businessFunctions.includes(parentBaseName)) {
+        childNames = ["Team", "Projects", "Resources"].slice(0, actualChildrenForThisParent)
+      } else if (businessDepartments.includes(parentBaseName)) {
+        if (parentBaseName === "Finance") {
+          childNames = ["Accounting", "Budgeting", "Investments"].slice(0, actualChildrenForThisParent)
+        } else if (parentBaseName === "Marketing") {
+          childNames = ["Digital", "Content", "Events"].slice(0, actualChildrenForThisParent)
+        } else if (parentBaseName === "Human Resources") {
+          childNames = ["Recruiting", "Benefits", "Training"].slice(0, actualChildrenForThisParent)
+        } else if (parentBaseName === "Information Technology") {
+          childNames = ["Infrastructure", "Development", "Support"].slice(0, actualChildrenForThisParent)
+        } else {
+          // Generic child names
+          childNames = ["Team A", "Team B", "Projects"].slice(0, actualChildrenForThisParent)
+        }
+      } else if (businessRegions.includes(parentBaseName)) {
+        childNames = ["Sales", "Operations", "Support"].slice(0, actualChildrenForThisParent)
+      } else {
+        // Generic child names with numbers to ensure uniqueness
+        childNames = Array.from({ length: actualChildrenForThisParent }, (_, i) => `Subgroup ${i + 1}`)
+      }
+
+      // Create full paths for children and add to result
+      for (let j = 0; j < childNames.length && remainingCount > 0; j++) {
+        const childName = childNames[j]
+        const fullPath = `${parentPath}/${childName}`
+
+        if (!allCollections.has(fullPath)) {
+          allCollections.add(fullPath)
+          nextLevel.push(fullPath)
+          remainingCount--
+        }
+      }
+    }
+
+    // Update current level for next iteration
+    currentLevel = nextLevel
+  }
+
+  return Array.from(allCollections)
+}
+
+// Update the ensureParentPaths function to use forward slashes for Bitwarden
+const ensureParentPaths = (collections: string[]): string[] => {
+  const result = new Set<string>()
+
+  // Add all collections first
+  collections.forEach((collection) => result.add(collection))
+
+  // Then ensure all parent paths exist
+  collections.forEach((collection) => {
+    const parts = collection.split("/")
+
+    // For each level of nesting, ensure the parent path exists
+    for (let i = 1; i < parts.length; i++) {
+      const parentPath = parts.slice(0, i).join("/")
+      result.add(parentPath)
+    }
+  })
+
+  return Array.from(result)
+}
+
 export default function Component() {
   const [loginCount, setLoginCount] = useState(10)
   const [secureNoteCount, setSecureNoteCount] = useState(10)
@@ -723,10 +928,19 @@ export default function Component() {
   const [vaultFormat, setVaultFormat] = useState("bitwarden")
   const [useRealUrls, setUseRealUrls] = useState(false)
   const [useCollections, setUseCollections] = useState(false)
+  const [collectionCount, setCollectionCount] = useState(10)
   const [distributeItems, setDistributeItems] = useState(false)
   const [useNestedFolders, setUseNestedFolders] = useState(false)
   const [useRandomDepthNesting, setUseRandomDepthNesting] = useState(false)
   const [generatedData, setGeneratedData] = useState("")
+  const [useNestedCollections, setUseNestedCollections] = useState(false)
+  const [topLevelCollectionCount, setTopLevelCollectionCount] = useState(5)
+  const [collectionNestingDepth, setCollectionNestingDepth] = useState(2)
+  const [totalCollectionCount, setTotalCollectionCount] = useState(20)
+
+  // Generate hierarchical collection structure with proper parent-child relationships
+
+  // Ensure all parent paths exist in the collection list
 
   const generateVault = () => {
     if (vaultFormat === "bitwarden") {
@@ -742,14 +956,45 @@ export default function Component() {
       } else {
         const orgVault: BitwardenOrgVault = { collections: [], items: [] }
         const orgId = faker.string.uuid()
+
         if (useCollections) {
-          orgVault.collections = businessDepartments.map((dept) => ({
-            id: faker.string.uuid(),
-            organizationId: orgId,
-            name: dept,
-            externalId: null,
-          }))
+          if (useNestedCollections) {
+            // Generate hierarchical collections
+            let collectionNames = generateHierarchicalCollections(
+              topLevelCollectionCount,
+              collectionNestingDepth,
+              totalCollectionCount,
+            )
+
+            // Ensure all parent paths exist
+            collectionNames = ensureParentPaths(collectionNames)
+
+            // Sort collections to ensure parents come before children
+            collectionNames.sort((a, b) => {
+              const aDepth = a.split("/").length
+              const bDepth = b.split("/").length
+              return aDepth - bDepth
+            })
+
+            orgVault.collections = collectionNames.map((name) => ({
+              id: faker.string.uuid(),
+              organizationId: orgId,
+              name: name,
+              externalId: null,
+            }))
+          } else {
+            // Generate flat collections (existing code)
+            const collectionNames = generateUniqueCollectionNames(collectionCount)
+
+            orgVault.collections = collectionNames.map((name) => ({
+              id: faker.string.uuid(),
+              organizationId: orgId,
+              name: name,
+              externalId: null,
+            }))
+          }
         }
+
         orgVault.items = [
           ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls, orgVault.collections, distributeItems),
           ...createBitwardenItem(
@@ -783,9 +1028,6 @@ export default function Component() {
       const items = createLastPassItem(loginCount, useRealUrls)
       setGeneratedData(JSON.stringify(items, null, 2))
     } else if (vaultFormat === "keeper") {
-      // Update the generateVault function to use more extreme random depths when enabled
-      // Find this section in the generateVault function:
-
       // Create folder structure if using nested folders
       const maxDepth = useNestedFolders ? (useRandomDepthNesting ? faker.number.int({ min: 4, max: 10 }) : 3) : 1
 
@@ -989,15 +1231,93 @@ export default function Component() {
               />
               <Label htmlFor="useCollections">Create collections for business departments</Label>
             </div>
+
             {useCollections && (
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="distributeItems"
-                  checked={distributeItems}
-                  onCheckedChange={(checked) => setDistributeItems(checked as boolean)}
-                />
-                <Label htmlFor="distributeItems">Assign items to collections</Label>
-              </div>
+              <>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="useNestedCollections"
+                    checked={useNestedCollections}
+                    onCheckedChange={(checked) => setUseNestedCollections(checked as boolean)}
+                  />
+                  <Label htmlFor="useNestedCollections">Use nested collections</Label>
+                </div>
+
+                {useNestedCollections ? (
+                  <>
+                    <div>
+                      <Label htmlFor="totalCollectionCount">Total Number of Collections</Label>
+                      <Input
+                        id="totalCollectionCount"
+                        type="number"
+                        value={totalCollectionCount}
+                        onChange={(e) => setTotalCollectionCount(Number.parseInt(e.target.value))}
+                        min="1"
+                        max="100"
+                        aria-describedby="totalCollectionCount-description"
+                      />
+                      <p id="totalCollectionCount-description" className="text-sm text-muted-foreground">
+                        Enter the total number of collections to generate across all levels
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="topLevelCollectionCount">Number of Top-Level Collections</Label>
+                      <Input
+                        id="topLevelCollectionCount"
+                        type="number"
+                        value={topLevelCollectionCount}
+                        onChange={(e) => setTopLevelCollectionCount(Number.parseInt(e.target.value))}
+                        min="1"
+                        max="20"
+                        aria-describedby="topLevelCollectionCount-description"
+                      />
+                      <p id="topLevelCollectionCount-description" className="text-sm text-muted-foreground">
+                        Enter the number of top-level collections to generate
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="collectionNestingDepth">Maximum Nesting Depth</Label>
+                      <Input
+                        id="collectionNestingDepth"
+                        type="number"
+                        value={collectionNestingDepth}
+                        onChange={(e) => setCollectionNestingDepth(Number.parseInt(e.target.value))}
+                        min="1"
+                        max="5"
+                        aria-describedby="collectionNestingDepth-description"
+                      />
+                      <p id="collectionNestingDepth-description" className="text-sm text-muted-foreground">
+                        Enter the maximum depth of nested collections (e.g., 3 = Parent\Child\Grandchild)
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <Label htmlFor="collectionCount">Number of Collections</Label>
+                    <Input
+                      id="collectionCount"
+                      type="number"
+                      value={collectionCount}
+                      onChange={(e) => setCollectionCount(Number.parseInt(e.target.value))}
+                      min="1"
+                      max="100"
+                      aria-describedby="collectionCount-description"
+                    />
+                    <p id="collectionCount-description" className="text-sm text-muted-foreground">
+                      Enter the number of collections to generate
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="distributeItems"
+                    checked={distributeItems}
+                    onCheckedChange={(checked) => setDistributeItems(checked as boolean)}
+                  />
+                  <Label htmlFor="distributeItems">Assign items to collections</Label>
+                </div>
+              </>
             )}
           </>
         )}
@@ -1054,4 +1374,3 @@ export default function Component() {
     </div>
   )
 }
-
