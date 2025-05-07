@@ -105,6 +105,15 @@ interface LastPassItem {
   totp: string
 }
 
+// Add the Edge interface after the LastPass interface
+interface EdgePasswordItem {
+  name: string
+  url: string
+  username: string
+  password: string
+  note: string
+}
+
 // Keeper interface with updated folder structure
 interface KeeperFolder {
   name: string
@@ -561,6 +570,53 @@ const createLastPassItem = (
       name: website + " Login",
       grouping: "",
       totp: generateTOTPSecret(),
+    }
+    items.push(item)
+  }
+  return items
+}
+
+// Add the createEdgePasswordItem function after the createLastPassItem function
+const createEdgePasswordItem = (
+  number: number,
+  useRealUrls: boolean,
+  weakPasswordPercentage: number,
+  passwordReusePercentage: number,
+  passwordPool: string[],
+): EdgePasswordItem[] => {
+  const items: EdgePasswordItem[] = []
+  for (let i = 0; i < number; i++) {
+    const website = useRealUrls
+      ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
+      : faker.internet.domainName()
+
+    // Determine password strategy
+    let password: string
+
+    // First check if we should reuse a password
+    if (passwordPool.length > 0 && faker.number.int({ min: 1, max: 100 }) <= passwordReusePercentage) {
+      // Reuse a password from the pool
+      password = faker.helpers.arrayElement(passwordPool)
+    } else {
+      // Generate a new password (weak or strong)
+      if (faker.number.int({ min: 1, max: 100 }) <= weakPasswordPercentage) {
+        password = generateWeakPassword()
+      } else {
+        password = faker.internet.password()
+      }
+
+      // Add new password to the pool if it's not already there
+      if (passwordReusePercentage > 0 && !passwordPool.includes(password)) {
+        passwordPool.push(password)
+      }
+    }
+
+    const item: EdgePasswordItem = {
+      name: website + " Login",
+      url: `https://www.${website}`,
+      username: faker.internet.email(),
+      password: password,
+      note: faker.lorem.sentence(),
     }
     items.push(item)
   }
@@ -1268,6 +1324,18 @@ export default function Component() {
         passwordPool,
       )
       setGeneratedData(JSON.stringify(items, null, 2))
+    }
+    // Update the generateVault function to handle Edge format
+    // Add this case in the generateVault function after the lastpass case
+    else if (vaultFormat === "edge") {
+      const items = createEdgePasswordItem(
+        loginCount,
+        useRealUrls,
+        useWeakPasswords ? weakPasswordPercentage : 0,
+        reusePasswords ? passwordReusePercentage : 0,
+        passwordPool,
+      )
+      setGeneratedData(JSON.stringify(items, null, 2))
     } else if (vaultFormat === "keeper") {
       // Create folder structure if using nested folders
       const maxDepth = useNestedFolders ? (useRandomDepthNesting ? faker.number.int({ min: 4, max: 10 }) : 3) : 1
@@ -1317,6 +1385,19 @@ export default function Component() {
         .join("\n")
       content = header + csvContent
       filename = "lastpass_vault_export.csv"
+      type = "text/csv"
+    }
+    // Update the downloadData function to handle Edge format
+    // Add this case in the downloadData function after the lastpass case
+    else if (vaultFormat === "edge") {
+      // Convert JSON to CSV
+      const items: EdgePasswordItem[] = JSON.parse(generatedData)
+      const header = "name,url,username,password,note\n"
+      const csvContent = items
+        .map((item) => `"${item.name}","${item.url}","${item.username}","${item.password}","${item.note}"`)
+        .join("\n")
+      content = header + csvContent
+      filename = "edge_passwords_export.csv"
       type = "text/csv"
     } else if (vaultFormat === "keeper") {
       if (format === "json") {
@@ -1380,10 +1461,12 @@ export default function Component() {
             <SelectTrigger id="vaultFormat">
               <SelectValue placeholder="Select vault format" />
             </SelectTrigger>
+            {/* Update the SelectContent in the vaultFormat Select component to include Edge */}
             <SelectContent>
               <SelectItem value="bitwarden">Bitwarden</SelectItem>
               <SelectItem value="lastpass">LastPass</SelectItem>
               <SelectItem value="keeper">Keeper</SelectItem>
+              <SelectItem value="edge">Microsoft Edge</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1415,7 +1498,8 @@ export default function Component() {
             Enter the number of login items to generate (includes random TOTP keys)
           </p>
         </div>
-        {vaultFormat !== "lastpass" && (
+        {/* Update the vaultFormat !== "lastpass" condition to also exclude "edge" */}
+        {vaultFormat !== "lastpass" && vaultFormat !== "edge" && (
           <>
             <div>
               <Label htmlFor="secureNoteCount">Number of Secure Notes</Label>
@@ -1677,7 +1761,7 @@ export default function Component() {
             ) : (
               <Button onClick={() => downloadData()}>
                 <Download className="mr-2 h-4 w-4" />
-                Download {vaultFormat === "lastpass" ? "CSV" : "JSON"}
+                Download {vaultFormat === "lastpass" || vaultFormat === "edge" ? "CSV" : "JSON"}
               </Button>
             )}
           </div>
