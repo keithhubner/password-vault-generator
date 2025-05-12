@@ -159,7 +159,6 @@ interface KeePass2Meta {
   MasterKeyChangeForce: number
   MemoryProtection: {
     ProtectTitle: boolean
-    ProtectTitle: boolean
     ProtectUserName: boolean
     ProtectPassword: boolean
     ProtectURL: boolean
