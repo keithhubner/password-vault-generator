@@ -993,7 +993,7 @@ const createKeePass2File = (
       SettingsChanged: now,
       DatabaseName: "Generated Password Vault",
       DatabaseNameChanged: now,
-      DatabaseDescription: "Automatically generated test database",
+      DatabaseDescription: "",
       DatabaseDescriptionChanged: now,
       DefaultUserName: "",
       DefaultUserNameChanged: now,
@@ -1027,7 +1027,7 @@ const createKeePass2File = (
         passwordReusePercentage,
         passwordPool,
       ),
-      DeletedObjects: {} as DeletedObjectsType,
+      DeletedObjects: { DeletedObject: [] },
     },
   }
 }
@@ -1162,7 +1162,7 @@ ${indent}\t<LastTopVisibleEntry>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleEntry>`
 \t</Meta>
 \t<Root>
 ${groupToXML(keepass.Root.Group, "\t\t")}
-\t\t<DeletedObjects />
+\t\t<DeletedObjects></DeletedObjects>
 \t</Root>
 </KeePassFile>`
 }
