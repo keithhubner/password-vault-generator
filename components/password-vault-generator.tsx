@@ -187,8 +187,8 @@ interface KeePass2Group {
   EnableAutoType: string
   EnableSearching: string
   LastTopVisibleEntry: string
-  Entries?: KeePass2Entry[]
-  Groups?: KeePass2Group[] // For nested groups
+  Entries: KeePass2Entry[] // Changed from optional to required
+  Groups: KeePass2Group[] // Changed from optional to required
 }
 
 // Update the KeePass2Entry interface to include additional fields
@@ -213,7 +213,7 @@ interface KeePass2Entry {
 
 // Add this new interface after the KeePass2Entry interface:
 interface DeletedObjectsType {
-  DeletedObject?: Array<{
+  DeletedObject: Array<{
     UUID: string
     DeletionTime: string
   }>
@@ -908,8 +908,8 @@ const createKeePass2Groups = (
     EnableAutoType: "Null",
     EnableSearching: "Null",
     LastTopVisibleEntry: "AAAAAAAAAAAAAAAAAAAAAA==",
-    Entries: [],
-    Groups: [],
+    Entries: [], // Initialize as empty array
+    Groups: [], // Initialize as empty array
   }
 
   // Create some common subgroups
@@ -935,7 +935,8 @@ const createKeePass2Groups = (
       EnableAutoType: "Null",
       EnableSearching: "Null",
       LastTopVisibleEntry: "AAAAAAAAAAAAAAAAAAAAAA==",
-      Entries: [],
+      Entries: [], // Initialize as empty array
+      Groups: [], // Initialize as empty array
     }
   })
 
