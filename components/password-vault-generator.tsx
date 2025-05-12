@@ -212,12 +212,15 @@ interface KeePass2Entry {
   }
 }
 
+// Add this new interface after the KeePass2Entry interface:
+type DeletedObjectsType = {}
+
 // Update the KeePass2File interface to include DeletedObjects
 interface KeePass2File {
   Meta: KeePass2Meta
   Root: {
     Group: KeePass2Group
-    DeletedObjects: any
+    DeletedObjects: DeletedObjectsType
   }
 }
 
@@ -1006,11 +1009,6 @@ const createKeePass2File = (
       RecycleBinChanged: now,
       EntryTemplatesGroup: "AAAAAAAAAAAAAAAAAAAAAA==",
       EntryTemplatesGroupChanged: now,
-      RecycleBinEnabled: true,
-      RecycleBinUUID: "AAAAAAAAAAAAAAAAAAAAAA==",
-      RecycleBinChanged: now,
-      EntryTemplatesGroup: "AAAAAAAAAAAAAAAAAAAAAA==",
-      EntryTemplatesGroupChanged: now,
       HistoryMaxItems: 10,
       HistoryMaxSize: 6291456,
       LastSelectedGroup: "AAAAAAAAAAAAAAAAAAAAAA==",
@@ -1024,7 +1022,7 @@ const createKeePass2File = (
         passwordReusePercentage,
         passwordPool,
       ),
-      DeletedObjects: {},
+      DeletedObjects: {} as DeletedObjectsType,
     },
   }
 }
