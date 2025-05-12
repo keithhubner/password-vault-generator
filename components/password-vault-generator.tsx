@@ -105,13 +105,120 @@ interface LastPassItem {
   totp: string
 }
 
-// Add the Edge interface after the LastPass interface
+// Edge interface
 interface EdgePasswordItem {
   name: string
   url: string
   username: string
   password: string
   note: string
+}
+
+// KeePassX interface
+interface KeePassXItem {
+  title: string
+  username: string
+  password: string
+  url: string
+  notes: string
+}
+
+// Add these interfaces after the KeePassXItem interface
+interface KeePass2String {
+  Key: string
+  Value: string
+  ProtectInMemory?: boolean
+}
+
+interface KeePass2Times {
+  LastModificationTime: string
+  CreationTime: string
+  LastAccessTime: string
+  ExpiryTime: string
+  Expires: boolean
+  UsageCount: number
+  LocationChanged: string
+}
+
+// Update the KeePass2 interfaces to match the actual format
+
+// Replace the KeePass2Meta interface with this more complete version:
+interface KeePass2Meta {
+  Generator: string
+  SettingsChanged: string
+  DatabaseName: string
+  DatabaseNameChanged: string
+  DatabaseDescription: string
+  DatabaseDescriptionChanged: string
+  DefaultUserName: string
+  DefaultUserNameChanged: string
+  MaintenanceHistoryDays: number
+  Color: string
+  MasterKeyChanged: string
+  MasterKeyChangeRec: number
+  MasterKeyChangeForce: number
+  MemoryProtection: {
+    ProtectTitle: boolean
+    ProtectTitle: boolean
+    ProtectUserName: boolean
+    ProtectPassword: boolean
+    ProtectURL: boolean
+    ProtectNotes: boolean
+  }
+  RecycleBinEnabled: boolean
+  RecycleBinUUID: string
+  RecycleBinChanged: string
+  EntryTemplatesGroup: string
+  EntryTemplatesGroupChanged: string
+  HistoryMaxItems: number
+  HistoryMaxSize: number
+  LastSelectedGroup: string
+  LastTopVisibleGroup: string
+}
+
+// Update the KeePass2Group interface to include additional fields
+interface KeePass2Group {
+  UUID: string
+  Name: string
+  Notes: string
+  IconID: number
+  Times: KeePass2Times
+  IsExpanded: boolean
+  DefaultAutoTypeSequence: string
+  EnableAutoType: string
+  EnableSearching: string
+  LastTopVisibleEntry: string
+  Entries?: KeePass2Entry[]
+  Groups?: KeePass2Group[] // For nested groups
+}
+
+// Update the KeePass2Entry interface to include additional fields
+interface KeePass2Entry {
+  UUID: string
+  IconID: number
+  ForegroundColor: string
+  BackgroundColor: string
+  OverrideURL: string
+  Tags: string
+  Times: KeePass2Times
+  Strings: KeePass2String[]
+  AutoType?: {
+    Enabled: boolean
+    DataTransferObfuscation: number
+    Association?: {
+      Window: string
+      KeystrokeSequence: string
+    }[]
+  }
+}
+
+// Update the KeePass2File interface to include DeletedObjects
+interface KeePass2File {
+  Meta: KeePass2Meta
+  Root: {
+    Group: KeePass2Group
+    DeletedObjects: any
+  }
 }
 
 // Keeper interface with updated folder structure
@@ -576,7 +683,7 @@ const createLastPassItem = (
   return items
 }
 
-// Add the createEdgePasswordItem function after the createLastPassItem function
+// Helper function to create Edge password items
 const createEdgePasswordItem = (
   number: number,
   useRealUrls: boolean,
@@ -623,256 +730,438 @@ const createEdgePasswordItem = (
   return items
 }
 
-// Find the generateFolderStructure function and replace it with this improved version
-// that properly implements deep nesting
+// Helper function to create KeePassX items
+const createKeePassXItem = (
+  number: number,
+  useRealUrls: boolean,
+  weakPasswordPercentage: number,
+  passwordReusePercentage: number,
+  passwordPool: string[],
+): KeePassXItem[] => {
+  const items: KeePassXItem[] = []
+  for (let i = 0; i < number; i++) {
+    const website = useRealUrls
+      ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
+      : faker.internet.domainName()
 
-const generateFolderStructure = (maxDepth = 3, maxChildren = 3): KeeperFolder[] => {
-  // Base categories for top level
-  const folderCategories = [
-    "Personal",
-    "Work",
-    "Finance",
-    "Social",
-    "Shopping",
-    "Travel",
-    "Entertainment",
-    "Health",
-    "Education",
-    "Family",
-  ]
+    // Determine password strategy
+    let password: string
 
-  // Categories for second level
-  const subCategories: Record<string, string[]> = {
-    Personal: ["Documents", "Photos", "Contacts", "Notes"],
-    Work: ["Projects", "Clients", "Meetings", "Resources"],
-    Finance: ["Banking", "Investments", "Insurance", "Taxes"],
-    Social: ["Facebook", "Twitter", "Instagram", "LinkedIn"],
-    Shopping: ["Amazon", "eBay", "Etsy", "Walmart"],
-    Travel: ["Airlines", "Hotels", "Rentals", "Bookings"],
-    Entertainment: ["Streaming", "Gaming", "Music", "Movies"],
-    Health: ["Medical", "Fitness", "Insurance", "Prescriptions"],
-    Education: ["Courses", "Certificates", "Resources", "Schools"],
-    Family: ["Children", "Spouse", "Parents", "Relatives"],
-  }
-
-  // Categories for third level
-  const subSubCategories: Record<string, string[]> = {
-    Banking: ["Checking", "Savings", "Credit Cards", "Loans"],
-    Investments: ["Stocks", "Bonds", "Crypto", "Retirement"],
-    Projects: ["Active", "Completed", "Planning", "Archive"],
-    Streaming: ["Netflix", "Hulu", "Disney+", "HBO Max"],
-    Airlines: ["Domestic", "International", "Rewards", "Bookings"],
-  }
-
-  // Categories for deeper levels (4+)
-  const deepCategories = [
-    "Primary",
-    "Secondary",
-    "Archived",
-    "Important",
-    "Confidential",
-    "Shared",
-    "Private",
-    "Legacy",
-    "Current",
-    "Draft",
-    "Final",
-    "2023",
-    "2024",
-    "Q1",
-    "Q2",
-    "Q3",
-    "Q4",
-    "East",
-    "West",
-    "North",
-    "South",
-  ]
-
-  // Recursive function to generate nested folders at any depth
-  const generateNestedFolders = (depth: number, parentPath = ""): KeeperFolder[] => {
-    if (depth <= 0) return []
-
-    // For deeper levels, use the deep categories
-    const categoriesToUse = depth <= 3 ? deepCategories : deepCategories
-    const numFolders = faker.number.int({ min: 1, max: Math.min(4, categoriesToUse.length) })
-
-    // Select random categories for this level
-    const selectedCategories = [...categoriesToUse].sort(() => 0.5 - Math.random()).slice(0, numFolders)
-
-    return selectedCategories.map((category) => {
-      const currentPath = parentPath ? `${parentPath}\\${category}` : category
-
-      const folder: KeeperFolder = {
-        name: category,
-        path: currentPath,
+    // First check if we should reuse a password
+    if (passwordPool.length > 0 && faker.number.int({ min: 1, max: 100 }) <= passwordReusePercentage) {
+      // Reuse a password from the pool
+      password = faker.helpers.arrayElement(passwordPool)
+    } else {
+      // Generate a new password (weak or strong)
+      if (faker.number.int({ min: 1, max: 100 }) <= weakPasswordPercentage) {
+        password = generateWeakPassword()
+      } else {
+        password = faker.internet.password()
       }
 
-      // Decide whether to add children (higher chance at lower depths)
-      const chanceOfChildren = Math.max(0.1, 0.8 - depth * 0.1)
-      if (depth > 1 && faker.datatype.boolean(chanceOfChildren)) {
-        folder.children = generateNestedFolders(depth - 1, currentPath)
+      // Add new password to the pool if it's not already there
+      if (passwordReusePercentage > 0 && !passwordPool.includes(password)) {
+        passwordPool.push(password)
       }
+    }
 
-      return folder
-    })
+    // Occasionally generate entries with empty fields (like in the example)
+    const hasUrl = faker.datatype.boolean(0.9) // 90% chance to have URL
+    const hasUsername = faker.datatype.boolean(0.95) // 95% chance to have username
+    const hasNotes = faker.datatype.boolean(0.7) // 70% chance to have notes
+
+    const item: KeePassXItem = {
+      title: website + " Login",
+      username: hasUsername ? faker.internet.userName() : "",
+      password: password,
+      url: hasUrl ? `https://www.${website}` : "",
+      notes: hasNotes ? faker.lorem.sentence() : "",
+    }
+    items.push(item)
   }
-
-  // Start with top-level folders
-  const numTopFolders = faker.number.int({ min: 2, max: 5 })
-  const selectedTopCategories = [...folderCategories].sort(() => 0.5 - Math.random()).slice(0, numTopFolders)
-
-  return selectedTopCategories.map((category) => {
-    const folder: KeeperFolder = {
-      name: category,
-      path: category,
-    }
-
-    // For top-level folders, use the predefined subcategories
-    if (maxDepth > 1 && subCategories[category]) {
-      const subCats = subCategories[category]
-      const numChildren = faker.number.int({ min: 1, max: Math.min(3, subCats.length) })
-      const selectedSubCats = [...subCats].sort(() => 0.5 - Math.random()).slice(0, numChildren)
-
-      folder.children = selectedSubCats.map((subCat) => {
-        const subFolder: KeeperFolder = {
-          name: subCat,
-          path: `${category}\\${subCat}`,
-        }
-
-        // For second-level folders, use predefined sub-subcategories if available
-        if (maxDepth > 2 && subSubCategories[subCat]) {
-          const subSubCats = subSubCategories[subCat]
-          const numSubChildren = faker.number.int({ min: 1, max: Math.min(3, subSubCats.length) })
-          const selectedSubSubCats = [...subSubCats].sort(() => 0.5 - Math.random()).slice(0, numSubChildren)
-
-          subFolder.children = selectedSubSubCats.map((subSubCat) => {
-            const subSubFolder: KeeperFolder = {
-              name: subSubCat,
-              path: `${category}\\${subCat}\\${subSubCat}`,
-            }
-
-            // For deeper nesting (beyond level 3), use the recursive function
-            if (maxDepth > 3) {
-              subSubFolder.children = generateNestedFolders(maxDepth - 3, subSubFolder.path)
-            }
-
-            return subSubFolder
-          })
-        }
-
-        return subFolder
-      })
-    }
-
-    return folder
-  })
+  return items
 }
 
-// Also replace the generateSharedFolderStructure function with this improved version
+// Add these helper functions after the flattenSharedFolderStructure function
 
-const generateSharedFolderStructure = (maxDepth = 2): KeeperSharedFolder[] => {
-  const sharedCategories = [
-    "Team Projects",
-    "Department Resources",
-    "Company Policies",
-    "Client Information",
-    "Vendor Access",
-    "Shared Services",
-  ]
-
-  const sharedSubCategories: Record<string, string[]> = {
-    "Team Projects": ["Active", "Archived", "Planning"],
-    "Department Resources": ["HR", "IT", "Finance", "Marketing"],
-    "Company Policies": ["Security", "HR", "IT", "General"],
-    "Client Information": ["Active", "Prospective", "Former"],
-    "Vendor Access": ["IT Services", "Office Supplies", "Consulting"],
-    "Shared Services": ["Software", "Subscriptions", "Accounts"],
+// Helper function to generate a base64 UUID for KeePass2
+const generateKeePass2UUID = (): string => {
+  const bytes = new Uint8Array(16)
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = Math.floor(Math.random() * 256)
   }
+  return btoa(String.fromCharCode.apply(null, Array.from(bytes)))
+}
 
-  // Categories for deeper levels
-  const deepSharedCategories = [
-    "Priority",
-    "Standard",
-    "Legacy",
-    "Restricted",
-    "Public",
-    "Internal",
-    "External",
-    "Temporary",
-    "Permanent",
-    "Regional",
-    "Global",
-    "Local",
-    "Division",
-    "Group",
-    "Team",
-  ]
+// Helper function to generate ISO timestamp for KeePass2
+const generateKeePass2Timestamp = (date?: Date): string => {
+  const d = date || new Date()
+  return d.toISOString().replace(/\.\d+Z$/, "Z")
+}
 
-  // Recursive function to generate nested shared folders
-  const generateNestedSharedFolders = (depth: number, parentPath = ""): KeeperSharedFolder[] => {
-    if (depth <= 0) return []
+// Helper function to generate KeePass2 times object
+const generateKeePass2Times = (): KeePass2Times => {
+  const now = new Date()
+  const creationTime = now
+  const lastAccessTime = now
+  const expiryTime = new Date(now.getTime() - 24 * 60 * 60 * 1000) // One day in the past
 
-    const numFolders = faker.number.int({ min: 1, max: 3 })
-    const selectedCategories = [...deepSharedCategories].sort(() => 0.5 - Math.random()).slice(0, numFolders)
-
-    return selectedCategories.map((category) => {
-      const currentPath = parentPath ? `${parentPath}\\${category}` : category
-
-      const folder: KeeperSharedFolder = {
-        name: category,
-        path: currentPath,
-        can_edit: faker.datatype.boolean(),
-        can_share: faker.datatype.boolean(),
-      }
-
-      // Decide whether to add children (higher chance at lower depths)
-      const chanceOfChildren = Math.max(0.1, 0.7 - depth * 0.1)
-      if (depth > 1 && faker.datatype.boolean(chanceOfChildren)) {
-        folder.children = generateNestedSharedFolders(depth - 1, currentPath)
-      }
-
-      return folder
-    })
+  return {
+    LastModificationTime: generateKeePass2Timestamp(now),
+    CreationTime: generateKeePass2Timestamp(creationTime),
+    LastAccessTime: generateKeePass2Timestamp(lastAccessTime),
+    ExpiryTime: generateKeePass2Timestamp(expiryTime),
+    Expires: false, // Always false as in the example
+    UsageCount: 0, // Always 0 as in the example
+    LocationChanged: generateKeePass2Timestamp(now),
   }
+}
 
-  // Select a subset of top-level shared folders
-  const numSharedFolders = faker.number.int({ min: 1, max: 3 })
-  const selectedSharedCategories = [...sharedCategories].sort(() => 0.5 - Math.random()).slice(0, numSharedFolders)
+// Helper function to create KeePass2 entries
+const createKeePass2Entry = (
+  useRealUrls: boolean,
+  weakPasswordPercentage: number,
+  passwordReusePercentage: number,
+  passwordPool: string[],
+): KeePass2Entry => {
+  const website = useRealUrls
+    ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
+    : faker.internet.domainName()
 
-  return selectedSharedCategories.map((category) => {
-    const sharedFolder: KeeperSharedFolder = {
-      name: category,
-      path: category,
-      can_edit: faker.datatype.boolean(),
-      can_share: faker.datatype.boolean(),
+  // Determine password strategy
+  let password: string
+
+  // First check if we should reuse a password
+  if (passwordPool.length > 0 && faker.number.int({ min: 1, max: 100 }) <= passwordReusePercentage) {
+    // Reuse a password from the pool
+    password = faker.helpers.arrayElement(passwordPool)
+  } else {
+    // Generate a new password (weak or strong)
+    if (faker.number.int({ min: 1, max: 100 }) <= weakPasswordPercentage) {
+      password = generateWeakPassword()
+    } else {
+      password = faker.internet.password()
     }
 
-    // Add second level if applicable
-    if (maxDepth > 1 && sharedSubCategories[category]) {
-      const subCats = sharedSubCategories[category]
-      const numChildren = faker.number.int({ min: 1, max: Math.min(3, subCats.length) })
-      const selectedSubCats = [...subCats].sort(() => 0.5 - Math.random()).slice(0, numChildren)
-
-      sharedFolder.children = selectedSubCats.map((subCat) => {
-        const subFolder: KeeperSharedFolder = {
-          name: subCat,
-          path: `${category}\\${subCat}`,
-          can_edit: faker.datatype.boolean(),
-          can_share: faker.datatype.boolean(),
-        }
-
-        // For deeper nesting (beyond level 2), use the recursive function
-        if (maxDepth > 2) {
-          subFolder.children = generateNestedSharedFolders(maxDepth - 2, subFolder.path)
-        }
-
-        return subFolder
-      })
+    // Add new password to the pool if it's not already there
+    if (passwordReusePercentage > 0 && !passwordPool.includes(password)) {
+      passwordPool.push(password)
     }
+  }
 
-    return sharedFolder
+  // Create strings array with standard fields - order matters in KeePass2
+  // The order in the example is: Notes, Password, Title, URL, UserName
+  const strings: KeePass2String[] = [
+    { Key: "Notes", Value: faker.lorem.sentence() },
+    { Key: "Password", Value: password, ProtectInMemory: true },
+    { Key: "Title", Value: website + " Login" },
+    { Key: "URL", Value: `https://www.${website}` },
+    { Key: "UserName", Value: faker.internet.userName() },
+  ]
+
+  return {
+    UUID: generateKeePass2UUID(),
+    IconID: 0, // Set to 0 to match example
+    ForegroundColor: "",
+    BackgroundColor: "",
+    OverrideURL: "",
+    Tags: "",
+    Times: generateKeePass2Times(),
+    Strings: strings,
+    AutoType: {
+      Enabled: true,
+      DataTransferObfuscation: 0,
+      Association: [
+        {
+          Window: "Target Window",
+          KeystrokeSequence: "{USERNAME}{TAB}{PASSWORD}{TAB}{ENTER}",
+        },
+      ],
+    },
+  }
+}
+
+// Helper function to create KeePass2 groups with entries
+const createKeePass2Groups = (
+  loginCount: number,
+  useRealUrls: boolean,
+  weakPasswordPercentage: number,
+  passwordReusePercentage: number,
+  passwordPool: string[],
+): KeePass2Group => {
+  // Create main group
+  const mainGroup: KeePass2Group = {
+    UUID: generateKeePass2UUID(),
+    Name: "Database",
+    Notes: "",
+    IconID: 49,
+    Times: generateKeePass2Times(),
+    IsExpanded: true,
+    DefaultAutoTypeSequence: "",
+    EnableAutoType: "Null",
+    EnableSearching: "Null",
+    LastTopVisibleEntry: "AAAAAAAAAAAAAAAAAAAAAA==",
+    Entries: [],
+    Groups: [],
+  }
+
+  // Create some common subgroups
+  const subgroups = [
+    { name: "General", notes: "", iconId: 48 },
+    { name: "Windows", notes: "", iconId: 38 },
+    { name: "Network", notes: "", iconId: 3 },
+    { name: "Internet", notes: "", iconId: 1 },
+    { name: "eMail", notes: "", iconId: 19 },
+    { name: "Homebanking", notes: "", iconId: 37 },
+  ]
+
+  // Create subgroups
+  mainGroup.Groups = subgroups.map((group) => {
+    return {
+      UUID: generateKeePass2UUID(),
+      Name: group.name,
+      Notes: group.notes,
+      IconID: group.iconId,
+      Times: generateKeePass2Times(),
+      IsExpanded: true,
+      DefaultAutoTypeSequence: "",
+      EnableAutoType: "Null",
+      EnableSearching: "Null",
+      LastTopVisibleEntry: "AAAAAAAAAAAAAAAAAAAAAA==",
+      Entries: [],
+    }
   })
+
+  // Distribute entries among groups
+  let remainingEntries = loginCount
+
+  // Important change: Add a significant number of entries directly to the root group
+  // In the working example, about 9 entries are in the root group
+  const rootEntries = Math.min(remainingEntries, Math.max(8, Math.floor(loginCount * 0.3)))
+  for (let i = 0; i < rootEntries; i++) {
+    mainGroup.Entries.push(
+      createKeePass2Entry(useRealUrls, weakPasswordPercentage, passwordReusePercentage, passwordPool),
+    )
+  }
+  remainingEntries -= rootEntries
+
+  // Distribute remaining entries among subgroups
+  const entriesPerGroup = Math.max(1, Math.floor(remainingEntries / mainGroup.Groups.length))
+  for (const group of mainGroup.Groups) {
+    const groupEntries = Math.min(remainingEntries, entriesPerGroup)
+    for (let i = 0; i < groupEntries; i++) {
+      group.Entries.push(
+        createKeePass2Entry(useRealUrls, weakPasswordPercentage, passwordReusePercentage, passwordPool),
+      )
+    }
+    remainingEntries -= groupEntries
+  }
+
+  // If there are still entries left, add them to random groups
+  while (remainingEntries > 0) {
+    const targetGroup = faker.helpers.arrayElement([...mainGroup.Groups])
+    targetGroup.Entries.push(
+      createKeePass2Entry(useRealUrls, weakPasswordPercentage, passwordReusePercentage, passwordPool),
+    )
+    remainingEntries--
+  }
+
+  return mainGroup
+}
+
+// Helper function to generate a complete KeePass2 file
+const createKeePass2File = (
+  loginCount: number,
+  useRealUrls: boolean,
+  weakPasswordPercentage: number,
+  passwordReusePercentage: number,
+  passwordPool: string[],
+): KeePass2File => {
+  const now = generateKeePass2Timestamp()
+
+  return {
+    Meta: {
+      Generator: "KeePass",
+      SettingsChanged: now,
+      DatabaseName: "Generated Password Vault",
+      DatabaseNameChanged: now,
+      DatabaseDescription: "Automatically generated test database",
+      DatabaseDescriptionChanged: now,
+      DefaultUserName: "",
+      DefaultUserNameChanged: now,
+      MaintenanceHistoryDays: 365,
+      Color: "",
+      MasterKeyChanged: now,
+      MasterKeyChangeRec: -1,
+      MasterKeyChangeForce: -1,
+      MemoryProtection: {
+        ProtectTitle: false,
+        ProtectUserName: false,
+        ProtectPassword: true,
+        ProtectURL: false,
+        ProtectNotes: false,
+      },
+      RecycleBinEnabled: true,
+      RecycleBinUUID: "AAAAAAAAAAAAAAAAAAAAAA==",
+      RecycleBinChanged: now,
+      EntryTemplatesGroup: "AAAAAAAAAAAAAAAAAAAAAA==",
+      EntryTemplatesGroupChanged: now,
+      RecycleBinEnabled: true,
+      RecycleBinUUID: "AAAAAAAAAAAAAAAAAAAAAA==",
+      RecycleBinChanged: now,
+      EntryTemplatesGroup: "AAAAAAAAAAAAAAAAAAAAAA==",
+      EntryTemplatesGroupChanged: now,
+      HistoryMaxItems: 10,
+      HistoryMaxSize: 6291456,
+      LastSelectedGroup: "AAAAAAAAAAAAAAAAAAAAAA==",
+      LastTopVisibleGroup: "AAAAAAAAAAAAAAAAAAAAAA==",
+    },
+    Root: {
+      Group: createKeePass2Groups(
+        loginCount,
+        useRealUrls,
+        weakPasswordPercentage,
+        passwordReusePercentage,
+        passwordPool,
+      ),
+      DeletedObjects: {},
+    },
+  }
+}
+
+// Now replace the convertKeePass2ToXML function with this updated version:
+const convertKeePass2ToXML = (keepass: KeePass2File): string => {
+  // Helper function to create XML for KeePass2Times
+  const timesToXML = (times: KeePass2Times, indent: string): string => {
+    return `${indent}<Times>
+${indent}\t<CreationTime>${times.CreationTime}</CreationTime>
+${indent}\t<LastModificationTime>${times.LastModificationTime}</LastModificationTime>
+${indent}\t<LastAccessTime>${times.LastAccessTime}</LastAccessTime>
+${indent}\t<ExpiryTime>${times.ExpiryTime}</ExpiryTime>
+${indent}\t<Expires>False</Expires>
+${indent}\t<UsageCount>0</UsageCount>
+${indent}\t<LocationChanged>${times.LocationChanged}</LocationChanged>
+${indent}</Times>`
+  }
+
+  // Helper function to create XML for KeePass2String
+  const stringToXML = (str: KeePass2String, indent: string): string => {
+    if (str.ProtectInMemory) {
+      return `${indent}<String>
+${indent}\t<Key>${str.Key}</Key>
+${indent}\t<Value ProtectInMemory="True">${str.Value}</Value>
+${indent}</String>`
+    } else {
+      return `${indent}<String>
+${indent}\t<Key>${str.Key}</Key>
+${indent}\t<Value>${str.Value}</Value>
+${indent}</String>`
+    }
+  }
+
+  // Helper function to create XML for AutoType
+  const autoTypeToXML = (entry: KeePass2Entry, indent: string): string => {
+    return `${indent}<AutoType>
+${indent}\t<Enabled>True</Enabled>
+${indent}\t<DataTransferObfuscation>0</DataTransferObfuscation>
+${indent}\t<Association>
+${indent}\t\t<Window>Target Window</Window>
+${indent}\t\t<KeystrokeSequence>${entry.AutoType?.Association?.[0]?.KeystrokeSequence || "{USERNAME}{TAB}{PASSWORD}{TAB}{ENTER}"}</KeystrokeSequence>
+${indent}\t</Association>
+${indent}</AutoType>
+${indent}<History />`
+  }
+
+  // Helper function to create XML for KeePass2Entry
+  const entryToXML = (entry: KeePass2Entry, indent: string): string => {
+    return `${indent}<Entry>
+${indent}\t<UUID>${entry.UUID}</UUID>
+${indent}\t<IconID>${entry.IconID}</IconID>
+${indent}\t<ForegroundColor></ForegroundColor>
+${indent}\t<BackgroundColor></BackgroundColor>
+${indent}\t<OverrideURL></OverrideURL>
+${indent}\t<Tags></Tags>
+${timesToXML(entry.Times, indent + "\t")}
+${entry.Strings.map((str) => stringToXML(str, indent + "\t")).join("\n")}
+${autoTypeToXML(entry, indent + "\t")}
+${indent}</Entry>`
+  }
+
+  // Helper function to create XML for KeePass2Group (recursive for nested groups)
+  const groupToXML = (group: KeePass2Group, indent: string): string => {
+    let result = `${indent}<Group>
+${indent}\t<UUID>${group.UUID}</UUID>
+${indent}\t<Name>${group.Name}</Name>
+${indent}\t<Notes></Notes>
+${indent}\t<IconID>${group.IconID}</IconID>
+${timesToXML(group.Times, indent + "\t")}
+${indent}\t<IsExpanded>True</IsExpanded>
+${indent}\t<DefaultAutoTypeSequence></DefaultAutoTypeSequence>
+${indent}\t<EnableAutoType>Null</EnableAutoType>
+${indent}\t<EnableSearching>Null</EnableSearching>
+${indent}\t<LastTopVisibleEntry>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleEntry>`
+
+    // Add entries if they exist
+    if (group.Entries && group.Entries.length > 0) {
+      for (const entry of group.Entries) {
+        result += "\n" + entryToXML(entry, indent + "\t")
+      }
+    }
+
+    // Add subgroups if they exist
+    if (group.Groups && group.Groups.length > 0) {
+      for (const subgroup of group.Groups) {
+        result += "\n" + groupToXML(subgroup, indent + "\t")
+      }
+    }
+
+    // Close the group tag
+    result += `\n${indent}</Group>`
+
+    return result
+  }
+
+  // Create the full XML document - exactly matching the example format
+  return `<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<KeePassFile>
+\t<Meta>
+\t\t<Generator>KeePass</Generator>
+\t\t<SettingsChanged>${generateKeePass2Timestamp()}</SettingsChanged>
+\t\t<DatabaseName>${keepass.Meta.DatabaseName}</DatabaseName>
+\t\t<DatabaseNameChanged>${keepass.Meta.DatabaseNameChanged}</DatabaseNameChanged>
+\t\t<DatabaseDescription></DatabaseDescription>
+\t\t<DatabaseDescriptionChanged>${generateKeePass2Timestamp()}</DatabaseDescriptionChanged>
+\t\t<DefaultUserName></DefaultUserName>
+\t\t<DefaultUserNameChanged>${generateKeePass2Timestamp()}</DefaultUserNameChanged>
+\t\t<MaintenanceHistoryDays>365</MaintenanceHistoryDays>
+\t\t<Color></Color>
+\t\t<MasterKeyChanged>${generateKeePass2Timestamp()}</MasterKeyChanged>
+\t\t<MasterKeyChangeRec>-1</MasterKeyChangeRec>
+\t\t<MasterKeyChangeForce>-1</MasterKeyChangeForce>
+\t\t<MemoryProtection>
+\t\t\t<ProtectTitle>False</ProtectTitle>
+\t\t\t<ProtectUserName>False</ProtectUserName>
+\t\t\t<ProtectPassword>True</ProtectPassword>
+\t\t\t<ProtectURL>False</ProtectURL>
+\t\t\t<ProtectNotes>False</ProtectNotes>
+\t\t</MemoryProtection>
+\t\t<RecycleBinEnabled>True</RecycleBinEnabled>
+\t\t<RecycleBinUUID>AAAAAAAAAAAAAAAAAAAAAA==</RecycleBinUUID>
+\t\t<RecycleBinChanged>${generateKeePass2Timestamp()}</RecycleBinChanged>
+\t\t<EntryTemplatesGroup>AAAAAAAAAAAAAAAAAAAAAA==</EntryTemplatesGroup>
+\t\t<EntryTemplatesGroupChanged>${generateKeePass2Timestamp()}</EntryTemplatesGroupChanged>
+\t\t<HistoryMaxItems>10</HistoryMaxItems>
+\t\t<HistoryMaxSize>6291456</HistoryMaxSize>
+\t\t<LastSelectedGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastSelectedGroup>
+\t\t<LastTopVisibleGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleGroup>
+\t\t<Binaries />
+\t\t<CustomData />
+\t</Meta>
+\t<Root>
+${groupToXML(keepass.Root.Group, "\t\t")}
+\t\t<DeletedObjects />
+\t</Root>
+</KeePassFile>`
 }
 
 // Flatten folder structure for easier assignment to records
@@ -1135,6 +1424,50 @@ const ensureParentPaths = (collections: string[]): string[] => {
   return Array.from(result)
 }
 
+// Generate a random folder structure
+const generateFolderStructure = (maxDepth = 3): KeeperFolder[] => {
+  const numFolders = faker.number.int({ min: 2, max: 5 })
+  const folders: KeeperFolder[] = []
+
+  for (let i = 0; i < numFolders; i++) {
+    const folder: KeeperFolder = {
+      name: faker.word.noun(),
+    }
+
+    if (maxDepth > 1 && faker.datatype.boolean(0.6)) {
+      // 60% chance to have children
+      folder.children = generateFolderStructure(maxDepth - 1)
+    }
+
+    folders.push(folder)
+  }
+
+  return folders
+}
+
+// Generate a random shared folder structure
+const generateSharedFolderStructure = (maxDepth = 3): KeeperSharedFolder[] => {
+  const numFolders = faker.number.int({ min: 1, max: 3 })
+  const folders: KeeperSharedFolder[] = []
+
+  for (let i = 0; i < numFolders; i++) {
+    const folder: KeeperSharedFolder = {
+      name: faker.word.noun(),
+      can_edit: faker.datatype.boolean(),
+      can_share: faker.datatype.boolean(),
+    }
+
+    if (maxDepth > 1 && faker.datatype.boolean(0.5)) {
+      // 50% chance to have children
+      folder.children = generateSharedFolderStructure(maxDepth - 1)
+    }
+
+    folders.push(folder)
+  }
+
+  return folders
+}
+
 export default function Component() {
   const [loginCount, setLoginCount] = useState(10)
   const [secureNoteCount, setSecureNoteCount] = useState(10)
@@ -1324,11 +1657,17 @@ export default function Component() {
         passwordPool,
       )
       setGeneratedData(JSON.stringify(items, null, 2))
-    }
-    // Update the generateVault function to handle Edge format
-    // Add this case in the generateVault function after the lastpass case
-    else if (vaultFormat === "edge") {
+    } else if (vaultFormat === "edge") {
       const items = createEdgePasswordItem(
+        loginCount,
+        useRealUrls,
+        useWeakPasswords ? weakPasswordPercentage : 0,
+        reusePasswords ? passwordReusePercentage : 0,
+        passwordPool,
+      )
+      setGeneratedData(JSON.stringify(items, null, 2))
+    } else if (vaultFormat === "keepassx") {
+      const items = createKeePassXItem(
         loginCount,
         useRealUrls,
         useWeakPasswords ? weakPasswordPercentage : 0,
@@ -1361,6 +1700,18 @@ export default function Component() {
       }
 
       setGeneratedData(JSON.stringify(vault, null, 2))
+    } else if (vaultFormat === "keepass2") {
+      const keepassFile = createKeePass2File(
+        loginCount,
+        useRealUrls,
+        useWeakPasswords ? weakPasswordPercentage : 0,
+        reusePasswords ? passwordReusePercentage : 0,
+        passwordPool,
+      )
+
+      // Convert to XML and store
+      const xmlData = convertKeePass2ToXML(keepassFile)
+      setGeneratedData(xmlData)
     }
   }
 
@@ -1386,10 +1737,7 @@ export default function Component() {
       content = header + csvContent
       filename = "lastpass_vault_export.csv"
       type = "text/csv"
-    }
-    // Update the downloadData function to handle Edge format
-    // Add this case in the downloadData function after the lastpass case
-    else if (vaultFormat === "edge") {
+    } else if (vaultFormat === "edge") {
       // Convert JSON to CSV
       const items: EdgePasswordItem[] = JSON.parse(generatedData)
       const header = "name,url,username,password,note\n"
@@ -1398,6 +1746,16 @@ export default function Component() {
         .join("\n")
       content = header + csvContent
       filename = "edge_passwords_export.csv"
+      type = "text/csv"
+    } else if (vaultFormat === "keepassx") {
+      // Convert JSON to CSV
+      const items: KeePassXItem[] = JSON.parse(generatedData)
+      const header = '"Title","Username","Password","URL","Notes"\n'
+      const csvContent = items
+        .map((item) => `"${item.title}","${item.username}","${item.password}","${item.url}","${item.notes}"`)
+        .join("\n")
+      content = header + csvContent
+      filename = "keepassx_export.csv"
       type = "text/csv"
     } else if (vaultFormat === "keeper") {
       if (format === "json") {
@@ -1431,6 +1789,10 @@ export default function Component() {
         filename = "keeper_vault_export.csv"
         type = "text/csv"
       }
+    } else if (vaultFormat === "keepass2") {
+      content = generatedData
+      filename = "keepass2_export.xml"
+      type = "application/xml"
     } else {
       // Handle unexpected vault format
       console.error("Unexpected vault format")
@@ -1461,12 +1823,13 @@ export default function Component() {
             <SelectTrigger id="vaultFormat">
               <SelectValue placeholder="Select vault format" />
             </SelectTrigger>
-            {/* Update the SelectContent in the vaultFormat Select component to include Edge */}
             <SelectContent>
               <SelectItem value="bitwarden">Bitwarden</SelectItem>
               <SelectItem value="lastpass">LastPass</SelectItem>
               <SelectItem value="keeper">Keeper</SelectItem>
               <SelectItem value="edge">Microsoft Edge</SelectItem>
+              <SelectItem value="keepassx">KeePassX</SelectItem>
+              <SelectItem value="keepass2">KeePass2</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1498,53 +1861,59 @@ export default function Component() {
             Enter the number of login items to generate (includes random TOTP keys)
           </p>
         </div>
-        {/* Update the vaultFormat !== "lastpass" condition to also exclude "edge" */}
-        {vaultFormat !== "lastpass" && vaultFormat !== "edge" && (
-          <>
-            <div>
-              <Label htmlFor="secureNoteCount">Number of Secure Notes</Label>
-              <Input
-                id="secureNoteCount"
-                type="number"
-                value={secureNoteCount}
-                onChange={(e) => setSecureNoteCount(Number.parseInt(e.target.value))}
-                min="0"
-                aria-describedby="secureNoteCount-description"
-              />
-              <p id="secureNoteCount-description" className="text-sm text-muted-foreground">
-                Enter the number of secure note items to generate
-              </p>
-            </div>
-            <div>
-              <Label htmlFor="creditCardCount">Number of Credit Cards</Label>
-              <Input
-                id="creditCardCount"
-                type="number"
-                value={creditCardCount}
-                onChange={(e) => setCreditCardCount(Number.parseInt(e.target.value))}
-                min="0"
-                aria-describedby="creditCardCount-description"
-              />
-              <p id="creditCardCount-description" className="text-sm text-muted-foreground">
-                Enter the number of credit card items to generate
-              </p>
-            </div>
-            <div>
-              <Label htmlFor="identityCount">Number of Identities</Label>
-              <Input
-                id="identityCount"
-                type="number"
-                value={identityCount}
-                onChange={(e) => setIdentityCount(Number.parseInt(e.target.value))}
-                min="0"
-                aria-describedby="identityCount-description"
-              />
-              <p id="identityCount-description" className="text-sm text-muted-foreground">
-                Enter the number of identity items to generate
-              </p>
-            </div>
-          </>
+        {vaultFormat === "keepass2" && (
+          <p className="text-sm text-muted-foreground mt-1">KeePass2 only supports login items.</p>
         )}
+        {/* Update the condition to exclude all CSV-only formats and KeePass2 */}
+        {vaultFormat !== "lastpass" &&
+          vaultFormat !== "edge" &&
+          vaultFormat !== "keepassx" &&
+          vaultFormat !== "keepass2" && (
+            <>
+              <div>
+                <Label htmlFor="secureNoteCount">Number of Secure Notes</Label>
+                <Input
+                  id="secureNoteCount"
+                  type="number"
+                  value={secureNoteCount}
+                  onChange={(e) => setSecureNoteCount(Number.parseInt(e.target.value))}
+                  min="0"
+                  aria-describedby="secureNoteCount-description"
+                />
+                <p id="secureNoteCount-description" className="text-sm text-muted-foreground">
+                  Enter the number of secure note items to generate
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="creditCardCount">Number of Credit Cards</Label>
+                <Input
+                  id="creditCardCount"
+                  type="number"
+                  value={creditCardCount}
+                  onChange={(e) => setCreditCardCount(Number.parseInt(e.target.value))}
+                  min="0"
+                  aria-describedby="creditCardCount-description"
+                />
+                <p id="creditCardCount-description" className="text-sm text-muted-foreground">
+                  Enter the number of credit card items to generate
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="identityCount">Number of Identities</Label>
+                <Input
+                  id="identityCount"
+                  type="number"
+                  value={identityCount}
+                  onChange={(e) => setIdentityCount(Number.parseInt(e.target.value))}
+                  min="0"
+                  aria-describedby="identityCount-description"
+                />
+                <p id="identityCount-description" className="text-sm text-muted-foreground">
+                  Enter the number of identity items to generate
+                </p>
+              </div>
+            </>
+          )}
         <div className="space-y-4 border p-4 rounded-md">
           <div className="flex items-center space-x-2">
             <Checkbox
@@ -1761,7 +2130,12 @@ export default function Component() {
             ) : (
               <Button onClick={() => downloadData()}>
                 <Download className="mr-2 h-4 w-4" />
-                Download {vaultFormat === "lastpass" || vaultFormat === "edge" ? "CSV" : "JSON"}
+                Download{" "}
+                {vaultFormat === "lastpass" || vaultFormat === "edge" || vaultFormat === "keepassx"
+                  ? "CSV"
+                  : vaultFormat === "keepass2"
+                    ? "XML"
+                    : "JSON"}
               </Button>
             )}
           </div>
