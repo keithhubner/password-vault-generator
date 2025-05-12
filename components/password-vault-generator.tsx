@@ -213,7 +213,12 @@ interface KeePass2Entry {
 }
 
 // Add this new interface after the KeePass2Entry interface:
-type DeletedObjectsType = {}
+interface DeletedObjectsType {
+  DeletedObject?: Array<{
+    UUID: string
+    DeletionTime: string
+  }>
+}
 
 // Update the KeePass2File interface to include DeletedObjects
 interface KeePass2File {
