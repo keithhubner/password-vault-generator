@@ -17,8 +17,8 @@ export const VaultPreview: React.FC<VaultPreviewProps> = ({ data, onClear }) => 
 
   const previewData = showSensitive 
     ? data 
-    : data.replace(/"password":\s*"[^"]*"/g, '"password": "●●●●●●●●"')
-          .replace(/"totp":\s*"[^"]*"/g, '"totp": "●●●●●●●●"')
+    : data.replace(/"password":\s*"[^"]*"/g, '&quot;password&quot;: &quot;●●●●●●●●&quot;')
+          .replace(/"totp":\s*"[^"]*"/g, '&quot;totp&quot;: &quot;●●●●●●●●&quot;')
 
   const truncatedData = isExpanded ? previewData : previewData.slice(0, 1000) + "..."
 
@@ -56,7 +56,7 @@ export const VaultPreview: React.FC<VaultPreviewProps> = ({ data, onClear }) => 
       </pre>
       {!isExpanded && data.length > 1000 && (
         <p className="text-sm text-gray-500 mt-2">
-          Showing first 1000 characters. Click "Expand" to see full data.
+          Showing first 1000 characters. Click &quot;Expand&quot; to see full data.
         </p>
       )}
     </div>

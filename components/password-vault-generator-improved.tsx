@@ -69,7 +69,7 @@ export default function PasswordVaultGeneratorImproved() {
   const generatedDataRef = useRef<string>("")
 
   // Form validation
-  const validateInputs = (): string | null => {
+  const validateInputs = useCallback((): string | null => {
     if (loginCount < 0 || loginCount > 10000) return "Login count must be between 0 and 10,000"
     if (secureNoteCount < 0 || secureNoteCount > 10000) return "Secure note count must be between 0 and 10,000"
     if (creditCardCount < 0 || creditCardCount > 10000) return "Credit card count must be between 0 and 10,000"
@@ -80,7 +80,7 @@ export default function PasswordVaultGeneratorImproved() {
     if (totalItems > 10000) return "Total items cannot exceed 10,000"
     
     return null
-  }
+  }, [loginCount, secureNoteCount, creditCardCount, identityCount])
 
   // Progress simulator for large generations
   const simulateProgress = useCallback((totalItems: number, onProgress: (current: number, status: string) => void) => {
@@ -135,7 +135,7 @@ export default function PasswordVaultGeneratorImproved() {
       }
 
       // Generate vault data based on format
-      let vaultData: any
+      let vaultData: unknown
       let formattedData: string
 
       switch (vaultFormat) {
@@ -262,7 +262,7 @@ export default function PasswordVaultGeneratorImproved() {
     distributeItems, useNestedFolders, useRandomDepthNesting,
     useNestedCollections, topLevelCollectionCount, collectionNestingDepth,
     totalCollectionCount, useWeakPasswords, weakPasswordPercentage,
-    reusePasswords, passwordReusePercentage
+    reusePasswords, passwordReusePercentage, simulateProgress, validateInputs
   ])
 
   const downloadData = useCallback((format = "json") => {

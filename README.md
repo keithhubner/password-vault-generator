@@ -8,6 +8,8 @@ Perfect for testing password manager integrations, security audits, and developm
 ![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black.svg)
 
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support%20Development-orange?style=flat&logo=buy-me-a-coffee)](https://buymeacoffee.com/keithhubner)
+
 ## ✨ What This Tool Does
 
 - 🏢 **Generate test vaults** with realistic business data
@@ -217,6 +219,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - 🐛 **Bug Reports**: [Open an issue](https://github.com/keithhubner/password-vault-generator/issues)
 - 💡 **Feature Requests**: [Start a discussion](https://github.com/keithhubner/password-vault-generator/discussions)
 - 📧 **Questions**: Check existing issues or create a new one
+- ☕ **Support Development**: [Buy me a coffee](https://buymeacoffee.com/keithhubner) if this tool helped you!
 
 ## ⚠️ Important Notes
 
