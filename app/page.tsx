@@ -1,5 +1,5 @@
-import Component from "../components/password-vault-generator"
+import PasswordVaultGeneratorImproved from "../components/password-vault-generator-improved"
 
 export default function Home() {
-  return <Component />
+  return <PasswordVaultGeneratorImproved />
 }

@@ -1,7 +1,18 @@
 {
   "name": "password-vault-generator",
   "version": "0.1.0",
-  "private": true,
+  "description": "A comprehensive Next.js application for generating test password vault data in multiple formats including Bitwarden, LastPass, Keeper, Microsoft Edge, KeePassX, and KeePass2",
+  "keywords": ["password", "vault", "generator", "bitwarden", "lastpass", "keeper", "security", "testing", "nextjs"],
+  "author": "Keith Hubner",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keithhubner/password-vault-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/keithhubner/password-vault-generator/issues"
+  },
+  "homepage": "https://github.com/keithhubner/password-vault-generator#readme",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -18,19 +29,19 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.456.0",
-    "next": ">=15.2.3",
-    "react": "19.0.0-rc-de68d2f4-20241204",
-    "react-dom": "19.0.0-rc-de68d2f4-20241204",
+    "next": "^15.2.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "is-fullwidth-code-point": "^3.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
     "eslint": "^8",
-    "eslint-config-next": "15.0.3",
+    "eslint-config-next": "^15.2.3",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
