@@ -37,6 +37,7 @@ import { ExportButtons } from "./ExportButtons"
 import { VaultPreview } from "./VaultPreview"
 import { CivoBranding } from "./CivoBranding"
 import { DebugEnv } from "./DebugEnv"
+import { BuyMeACoffee } from "./BuyMeACoffee"
 
 export default function PasswordVaultGeneratorImproved() {
   // State management
@@ -431,6 +432,8 @@ export default function PasswordVaultGeneratorImproved() {
         )}
 
         <ProgressIndicator progress={progress} isVisible={isGenerating} />
+        
+        <BuyMeACoffee />
       </div>
     </ErrorBoundary>
   )
