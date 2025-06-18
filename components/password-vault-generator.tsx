@@ -566,7 +566,7 @@ const createBitwardenItem = (
                 uri: `https://www.${website}`,
               },
             ],
-            username: faker.internet.userName(),
+            username: faker.internet.username(),
             password: password,
             totp: generateTOTPSecret(),
           },
@@ -625,7 +625,7 @@ const createBitwardenItem = (
             email: faker.internet.email(),
             phone: faker.phone.number(),
             ssn: faker.string.numeric(9),
-            username: faker.internet.userName(),
+            username: faker.internet.username(),
             passportNumber: faker.string.alphanumeric(9),
             licenseNumber: faker.string.alphanumeric(8),
           },
@@ -779,7 +779,7 @@ const createKeePassXItem = (
 
     const item: KeePassXItem = {
       title: website + " Login",
-      username: hasUsername ? faker.internet.userName() : "",
+      username: hasUsername ? faker.internet.username() : "",
       password: password,
       url: hasUrl ? `https://www.${website}` : "",
       notes: hasNotes ? faker.lorem.sentence() : "",
@@ -863,7 +863,7 @@ const createKeePass2Entry = (
     { Key: "Password", Value: password, ProtectInMemory: true },
     { Key: "Title", Value: website + " Login" },
     { Key: "URL", Value: `https://www.${website}` },
-    { Key: "UserName", Value: faker.internet.userName() },
+    { Key: "UserName", Value: faker.internet.username() },
   ]
 
   return {
@@ -1306,7 +1306,7 @@ const createKeeperItem = (
 
     const item: KeeperRecord = {
       title: website + " Login",
-      login: faker.internet.userName(),
+      login: faker.internet.username(),
       password: password,
       login_url: `https://www.${website}`,
       notes: faker.lorem.paragraph(),

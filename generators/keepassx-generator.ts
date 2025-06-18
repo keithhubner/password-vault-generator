@@ -33,7 +33,7 @@ export const createKeePassXItem = (
 
     const item: KeePassXItem = {
       title: website + " Login",
-      username: hasUsername ? faker.internet.userName() : "",
+      username: hasUsername ? faker.internet.username() : "",
       password: password,
       url: hasUrl ? `https://www.${website}` : "",
       notes: hasNotes ? faker.lorem.sentence() : "",

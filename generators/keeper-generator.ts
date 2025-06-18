@@ -89,7 +89,7 @@ export const createKeeperItem = (
 
     const item: KeeperRecord = {
       title: website + " Login",
-      login: faker.internet.userName(),
+      login: faker.internet.username(),
       password: password,
       login_url: `https://www.${website}`,
       notes: faker.lorem.paragraph(),

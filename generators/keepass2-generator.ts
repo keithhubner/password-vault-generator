@@ -58,7 +58,7 @@ const createKeePass2Entry = (
     { Key: "Password", Value: password, ProtectInMemory: true },
     { Key: "Title", Value: website + " Login" },
     { Key: "URL", Value: `https://www.${website}` },
-    { Key: "UserName", Value: faker.internet.userName() },
+    { Key: "UserName", Value: faker.internet.username() },
   ]
 
   return {
