@@ -77,7 +77,7 @@ export const Footer: React.FC<FooterProps> = ({ className = "" }) => {
               rel="noopener noreferrer"
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
-              <span>Keith's Blog</span>
+              <span>Keith&apos;s Blog</span>
               <ExternalLink size={12} />
             </Link>
           </div>
