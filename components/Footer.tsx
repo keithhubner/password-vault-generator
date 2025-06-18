@@ -48,6 +48,8 @@ export const Footer: React.FC<FooterProps> = ({ className = "" }) => {
     }
   }, [])
 
+  // No need for manual script loading - using Next.js Script component instead
+
   const civoImageSrc = imageError ? "/img/civo-logo.svg" : "/img/civo-powered-by-fullcolour.svg"
 
   return (
@@ -107,8 +109,8 @@ export const Footer: React.FC<FooterProps> = ({ className = "" }) => {
             {/* Buy Me a Coffee */}
             {showBuyMeCoffee && (
               <Link
-                href="https://www.buymeacoffee.com/keithhubner" 
-                target="_blank" 
+                href="https://www.buymeacoffee.com/keithhubner"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:opacity-80"
                 style={{
@@ -118,19 +120,6 @@ export const Footer: React.FC<FooterProps> = ({ className = "" }) => {
                   textDecoration: 'none'
                 }}
               >
-                <svg 
-                  width="20" 
-                  height="20" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="mr-2"
-                >
-                  <path 
-                    d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-.766-1.623a4.85 4.85 0 0 0-1.364-1.24c-.253-.16-.531-.286-.821-.378L15.85 2.4c-.144-.044-.297-.068-.452-.068-.155 0-.308.024-.452.068L13.663 2.508c-.29.092-.568.218-.821.378a4.85 4.85 0 0 0-1.364 1.24c-.378.46-.647 1.025-.766 1.623l-.132.666C10.435 7.18 10.4 8 10.4 8.8v4.8c0 2.651 2.149 4.8 4.8 4.8s4.8-2.149 4.8-4.8V8.8c0-.8-.035-1.62-.184-2.385z" 
-                    fill="#ffffff"
-                  />
-                </svg>
                 Buy me a coffee
               </Link>
             )}
