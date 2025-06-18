@@ -11,21 +11,24 @@ export const DebugEnv: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check client-side env vars
-    console.log('Client-side NEXT_PUBLIC_HOSTED_ON:', process.env.NEXT_PUBLIC_HOSTED_ON)
-    console.log('All NEXT_PUBLIC vars:', Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC')))
+    // Only run debug logging in development
+    if (process.env.NODE_ENV !== 'production') {
+      // Check client-side env vars
+      console.log('Client-side NEXT_PUBLIC_HOSTED_ON:', process.env.NEXT_PUBLIC_HOSTED_ON)
+      console.log('All NEXT_PUBLIC vars:', Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC')))
 
-    // Fetch server-side config
-    fetch('/api/config')
-      .then(res => res.json())
-      .then(data => {
-        console.log('Server config:', data)
-        setConfig(data)
-      })
-      .catch(err => {
-        console.error('Config fetch error:', err)
-        setError(err.message)
-      })
+      // Fetch server-side config
+      fetch('/api/config')
+        .then(res => res.json())
+        .then(data => {
+          console.log('Server config:', data)
+          setConfig(data)
+        })
+        .catch(err => {
+          console.error('Config fetch error:', err)
+          setError(err.message)
+        })
+    }
   }, [])
 
   // Only show in development
