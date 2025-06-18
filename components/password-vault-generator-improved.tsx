@@ -35,9 +35,8 @@ import { PasswordOptionsPanel } from "./PasswordOptionsPanel"
 import { CollectionSettings } from "./CollectionSettings"
 import { ExportButtons } from "./ExportButtons"
 import { VaultPreview } from "./VaultPreview"
-import { CivoBranding } from "./CivoBranding"
 import { DebugEnv } from "./DebugEnv"
-import { BuyMeACoffee } from "./BuyMeACoffee"
+import { Footer } from "./Footer"
 
 export default function PasswordVaultGeneratorImproved() {
   // State management
@@ -343,7 +342,6 @@ export default function PasswordVaultGeneratorImproved() {
     <ErrorBoundary>
       <div className="container mx-auto p-4">
         <DebugEnv />
-        <CivoBranding />
         <div className="flex items-center mb-4">
           <Lock className="h-8 w-8 mr-2" aria-hidden="true" />
           <h1 className="text-2xl font-bold">Password Vault Generator</h1>
@@ -432,9 +430,9 @@ export default function PasswordVaultGeneratorImproved() {
         )}
 
         <ProgressIndicator progress={progress} isVisible={isGenerating} />
-        
-        <BuyMeACoffee />
       </div>
+      
+      <Footer />
     </ErrorBoundary>
   )
 }
