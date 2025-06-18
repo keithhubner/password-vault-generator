@@ -1,3 +1,13 @@
+# GitHub Actions workflow for deploying Password Vault Generator to Civo Kubernetes
+# 
+# This workflow:
+# 1. Builds and pushes a Docker image to GitHub Container Registry
+# 2. Deploys the application to Civo Kubernetes with proper configuration
+# 3. Enables Civo branding via environment variables in ConfigMap
+#
+# Required secrets:
+# - KUBE_CONFIG: Base64 encoded kubeconfig for Civo cluster
+
 name: Deploy PasswordVaultGenerator to Civo Kubernetes
 
 on:
@@ -52,10 +62,37 @@ jobs:
           mkdir -p $HOME/.kube
           echo ${{ secrets.KUBE_CONFIG }} | base64 -d > $HOME/.kube/config
 
-      # 8. Update Kubernetes deployment to use the new image tag
+      # 8. Deploy to Civo Kubernetes
       - name: Deploy to Civo Kubernetes
         run: |
-          sed -i "s|ghcr.io/${{ github.repository }}/passwordvaultgenerator:.*|ghcr.io/${{ github.repository }}/passwordvaultgenerator:${{ env.IMAGE_TAG }}|" k8s/deployment.yaml
+          # Update image tag in deployment
+          sed -i "s|ghcr.io/keithhubner/passwordvaultgenerator:.*|ghcr.io/keithhubner/passwordvaultgenerator:${{ env.IMAGE_TAG }}|" k8s/deployment.yaml
+          
+          # Show what changed
+          echo "Updated deployment.yaml image tag to: ${{ env.IMAGE_TAG }}"
+          grep "image:" k8s/deployment.yaml
+          
+          # Apply all Kubernetes manifests in order
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/deployment.yaml
+          
+          # Wait for deployment to complete
           kubectl rollout restart deployment/password-vault-generator -n password-vault-generator
           kubectl rollout status deployment/password-vault-generator -n password-vault-generator
+          
+          # Verify deployment
+          kubectl get pods -n password-vault-generator
+          kubectl get configmap nextjs-config -n password-vault-generator
+          
+          # Verify Civo branding is enabled
+          echo "Checking Civo branding configuration..."
+          HOSTED_ON=$(kubectl get configmap nextjs-config -n password-vault-generator -o jsonpath='{.data.NEXT_PUBLIC_HOSTED_ON}')
+          echo "NEXT_PUBLIC_HOSTED_ON is set to: '$HOSTED_ON'"
+          
+          if [ "$HOSTED_ON" = "civo" ]; then
+            echo "✅ Civo branding is properly configured and will be displayed"
+          else
+            echo "⚠️  Civo branding is not configured (value: '$HOSTED_ON')"
+          fi
