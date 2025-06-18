@@ -18,7 +18,9 @@ export const CivoBranding: React.FC<CivoBrandingProps> = ({ className = "" }) =>
     
     if (clientEnvValue) {
       setHostedOn(clientEnvValue)
-      console.log('CivoBranding - Using client env:', clientEnvValue)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('CivoBranding - Using client env:', clientEnvValue)
+      }
       return
     }
     
@@ -27,10 +29,14 @@ export const CivoBranding: React.FC<CivoBrandingProps> = ({ className = "" }) =>
       .then(res => res.json())
       .then(data => {
         setHostedOn(data.hostedOn)
-        console.log('CivoBranding - Using API config:', data.hostedOn)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('CivoBranding - Using API config:', data.hostedOn)
+        }
       })
       .catch(err => {
-        console.error('CivoBranding - Failed to fetch config:', err)
+        if (process.env.NODE_ENV === 'development') {
+          console.error('CivoBranding - Failed to fetch config:', err)
+        }
         setHostedOn('')
       })
   }, [])
@@ -41,11 +47,15 @@ export const CivoBranding: React.FC<CivoBrandingProps> = ({ className = "" }) =>
   }
   
   if (hostedOn !== "civo") {
-    console.log('CivoBranding - Not showing banner, hostedOn is:', hostedOn)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('CivoBranding - Not showing banner, hostedOn is:', hostedOn)
+    }
     return null
   }
   
-  console.log('CivoBranding - Showing Civo banner!')
+  if (process.env.NODE_ENV === 'development') {
+    console.log('CivoBranding - Showing Civo banner!')
+  }
 
   // Use the powered-by SVG when hosted on Civo, fallback to original logo
   const imageSrc = imageError ? "/img/civo-logo.svg" : "/img/civo-powered-by-fullcolour.svg"
