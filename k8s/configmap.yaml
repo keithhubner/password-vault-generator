@@ -7,4 +7,5 @@ data:
   NODE_ENV: "production"
   # Hosting provider branding - set to "civo" to show Civo branding
   NEXT_PUBLIC_HOSTED_ON: "civo"
+  HOSTED_ON: "civo"
   # Add other environment variables here 

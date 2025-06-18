@@ -133,10 +133,11 @@ NEXT_PUBLIC_HOSTED_ON=civo
 - `civo` - Displays Civo branding with link to civo.com
 - Leave empty to hide branding
 
-**Custom Images:**
-- Place your provider images in `public/img/`
-- Support for both SVG and JPG formats
-- SVG is preferred for crisp scaling
+**Logo Setup:**
+- Current logos in `public/img/` are **placeholders**
+- Replace `civo-logo.svg` and `civo-logo.jpg` with official Civo brand assets
+- Follow Civo branding guidelines for proper usage
+- See `public/img/README.md` for detailed instructions
 
 ## 🔧 Building & Development
 
