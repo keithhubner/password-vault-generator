@@ -18,6 +18,9 @@ spec:
         image: ghcr.io/keithhubner/passwordvaultgenerator:latest
         ports:
         - containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: nextjs-config
         resources:
           limits:
             memory: "512Mi"

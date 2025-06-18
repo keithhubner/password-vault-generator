@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: password-vault-generator
+  labels:
+    name: password-vault-generator
+    app: password-vault-generator

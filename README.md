@@ -44,6 +44,9 @@ cd password-vault-generator
 # Install dependencies
 npm install
 
+# Optional: Configure environment variables
+cp .env.example .env
+
 # Start the application
 npm run dev
 ```
@@ -112,6 +115,29 @@ Go to **http://localhost:3000** and start generating vault data!
 - **Business Departments**: Use realistic department names
 - **Collection Distribution**: Automatically assign items to collections
 
+## 🌐 Environment Configuration
+
+### Hosting Provider Branding
+
+To display hosting provider branding (like Civo), set environment variables:
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env and set:
+NEXT_PUBLIC_HOSTED_ON=civo
+```
+
+**Supported Providers:**
+- `civo` - Displays Civo branding with link to civo.com
+- Leave empty to hide branding
+
+**Custom Images:**
+- Place your provider images in `public/img/`
+- Support for both SVG and JPG formats
+- SVG is preferred for crisp scaling
+
 ## 🔧 Building & Development
 
 Want to modify the code? Here are the developer commands:
@@ -126,6 +152,22 @@ npm run build
 # Start production server
 npm start
 ```
+
+## ☸️ Kubernetes Deployment
+
+Deploy to Kubernetes (like Civo) using the provided manifests:
+
+```bash
+# Deploy all components
+kubectl apply -f k8s/
+
+# Check deployment status
+kubectl get pods -n password-vault-generator
+```
+
+The app will automatically show Civo branding when `NEXT_PUBLIC_HOSTED_ON=civo` is set in the ConfigMap.
+
+📖 **See [k8s/README.md](k8s/README.md) for detailed deployment instructions**
 
 ## 📝 Step-by-Step Examples
 
