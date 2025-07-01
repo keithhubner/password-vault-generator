@@ -4,8 +4,9 @@ export * from './edge'
 export * from './keepassx'
 export * from './keepass2'
 export * from './keeper'
+export * from './password-depot'
 
-export type VaultFormat = 'bitwarden' | 'lastpass' | 'keeper' | 'edge' | 'keepassx' | 'keepass2'
+export type VaultFormat = 'bitwarden' | 'lastpass' | 'keeper' | 'edge' | 'keepassx' | 'keepass2' | 'password-depot'
 export type VaultType = 'individual' | 'org'
 
 export interface VaultGenerationOptions {

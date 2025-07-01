@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Download, Lock } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
+import { createPasswordDepotItems, convertPasswordDepotToCSV } from "../generators/password-depot-generator"
+import { PasswordDepotItem } from "../types/password-depot"
 
 // Bitwarden interfaces
 interface BaseItem {
@@ -1494,6 +1496,12 @@ export default function Component() {
   const [reusePasswords, setReusePasswords] = useState(false)
   const [passwordReusePercentage, setPasswordReusePercentage] = useState(30)
 
+  const handleVaultFormatChange = (newFormat: string) => {
+    // Clear existing data when format changes
+    setGeneratedData("")
+    setVaultFormat(newFormat)
+  }
+
   const generateVault = () => {
     // Create a pool of passwords for reuse if enabled
     const passwordPool: string[] = []
@@ -1715,6 +1723,15 @@ export default function Component() {
       // Convert to XML and store
       const xmlData = convertKeePass2ToXML(keepassFile)
       setGeneratedData(xmlData)
+    } else if (vaultFormat === "password-depot") {
+      const items = createPasswordDepotItems(
+        loginCount,
+        useRealUrls,
+        useWeakPasswords ? weakPasswordPercentage : 0,
+        reusePasswords ? passwordReusePercentage : 0,
+        passwordPool
+      )
+      setGeneratedData(JSON.stringify(items, null, 2))
     }
   }
 
@@ -1796,6 +1813,12 @@ export default function Component() {
       content = generatedData
       filename = "keepass2_export.xml"
       type = "application/xml"
+    } else if (vaultFormat === "password-depot") {
+      // Convert JSON to CSV
+      const items: PasswordDepotItem[] = JSON.parse(generatedData)
+      content = convertPasswordDepotToCSV(items)
+      filename = "password_depot_export.csv"
+      type = "text/csv"
     } else {
       // Handle unexpected vault format
       console.error("Unexpected vault format")
@@ -1822,7 +1845,7 @@ export default function Component() {
       <div className="space-y-4">
         <div>
           <Label htmlFor="vaultFormat">Vault Format</Label>
-          <Select onValueChange={setVaultFormat} defaultValue={vaultFormat}>
+          <Select onValueChange={handleVaultFormatChange} defaultValue={vaultFormat}>
             <SelectTrigger id="vaultFormat">
               <SelectValue placeholder="Select vault format" />
             </SelectTrigger>
@@ -1833,6 +1856,7 @@ export default function Component() {
               <SelectItem value="edge">Microsoft Edge</SelectItem>
               <SelectItem value="keepassx">KeePassX</SelectItem>
               <SelectItem value="keepass2">KeePass2</SelectItem>
+              <SelectItem value="password-depot">Password Depot</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1864,14 +1888,17 @@ export default function Component() {
             Enter the number of login items to generate (includes random TOTP keys)
           </p>
         </div>
-        {vaultFormat === "keepass2" && (
-          <p className="text-sm text-muted-foreground mt-1">KeePass2 only supports login items.</p>
+        {(vaultFormat === "keepass2" || vaultFormat === "password-depot") && (
+          <p className="text-sm text-muted-foreground mt-1">
+            {vaultFormat === "keepass2" ? "KeePass2" : "Password Depot"} only supports login items.
+          </p>
         )}
         {/* Update the condition to exclude all CSV-only formats and KeePass2 */}
         {vaultFormat !== "lastpass" &&
           vaultFormat !== "edge" &&
           vaultFormat !== "keepassx" &&
-          vaultFormat !== "keepass2" && (
+          vaultFormat !== "keepass2" &&
+          vaultFormat !== "password-depot" && (
             <>
               <div>
                 <Label htmlFor="secureNoteCount">Number of Secure Notes</Label>
@@ -2134,7 +2161,7 @@ export default function Component() {
               <Button onClick={() => downloadData()}>
                 <Download className="mr-2 h-4 w-4" />
                 Download{" "}
-                {vaultFormat === "lastpass" || vaultFormat === "edge" || vaultFormat === "keepassx"
+                {vaultFormat === "lastpass" || vaultFormat === "edge" || vaultFormat === "keepassx" || vaultFormat === "password-depot"
                   ? "CSV"
                   : vaultFormat === "keepass2"
                     ? "XML"

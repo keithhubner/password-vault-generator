@@ -28,6 +28,7 @@ import { createEdgePasswordItem } from "../generators/edge-generator"
 import { createKeePassXItem } from "../generators/keepassx-generator"
 import { createKeePass2File, convertKeePass2ToXML } from "../generators/keepass2-generator"
 import { generateKeeperVault } from "../generators/keeper-generator"
+import { createPasswordDepotItems, convertPasswordDepotToCSV } from "../generators/password-depot-generator"
 import { ErrorBoundary } from "./ErrorBoundary"
 import { ProgressIndicator } from "./ProgressIndicator"
 import { VaultConfigForm } from "./VaultConfigForm"
@@ -235,6 +236,15 @@ export default function PasswordVaultGeneratorImproved() {
           formattedData = JSON.stringify(vaultData, null, 2)
           break
 
+        case "password-depot":
+          vaultData = createPasswordDepotItems(
+            loginCount, useRealUrls,
+            useWeakPasswords, weakPasswordPercentage,
+            reusePasswords, passwordReusePercentage, passwordPool
+          )
+          formattedData = JSON.stringify(vaultData, null, 2)
+          break
+
         default:
           throw new Error(`Unsupported vault format: ${vaultFormat}`)
       }
@@ -312,6 +322,11 @@ export default function PasswordVaultGeneratorImproved() {
           filename = "keepass2_export.xml"
           type = "application/xml"
           break
+        case "password-depot":
+          content = convertPasswordDepotToCSV(JSON.parse(generatedData))
+          filename = "password_depot_export.csv"
+          type = "text/csv"
+          break
         default:
           throw new Error(`Unsupported vault format: ${vaultFormat}`)
       }
@@ -338,6 +353,12 @@ export default function PasswordVaultGeneratorImproved() {
     setError(null)
   }, [])
 
+  const handleVaultFormatChange = useCallback((newFormat: VaultFormat) => {
+    // Clear existing data when format changes
+    clearGeneratedData()
+    setVaultFormat(newFormat)
+  }, [clearGeneratedData])
+
   return (
     <ErrorBoundary>
       <div className="container mx-auto p-4">
@@ -363,7 +384,7 @@ export default function PasswordVaultGeneratorImproved() {
         <div className="space-y-6">
           <VaultConfigForm
             vaultFormat={vaultFormat}
-            onVaultFormatChange={setVaultFormat}
+            onVaultFormatChange={handleVaultFormatChange}
             vaultType={vaultType}
             onVaultTypeChange={setVaultType}
             loginCount={loginCount}

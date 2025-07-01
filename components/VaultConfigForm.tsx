@@ -34,7 +34,7 @@ export const VaultConfigForm: React.FC<VaultConfigFormProps> = ({
   identityCount,
   onIdentityCountChange,
 }) => {
-  const showAdditionalItems = !["lastpass", "edge", "keepassx", "keepass2"].includes(vaultFormat)
+  const showAdditionalItems = !["lastpass", "edge", "keepassx", "keepass2", "password-depot"].includes(vaultFormat)
 
   return (
     <div className="space-y-4">
@@ -51,6 +51,7 @@ export const VaultConfigForm: React.FC<VaultConfigFormProps> = ({
             <SelectItem value="edge">Microsoft Edge</SelectItem>
             <SelectItem value="keepassx">KeePassX</SelectItem>
             <SelectItem value="keepass2">KeePass2</SelectItem>
+            <SelectItem value="password-depot">Password Depot</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -86,8 +87,10 @@ export const VaultConfigForm: React.FC<VaultConfigFormProps> = ({
         </p>
       </div>
 
-      {vaultFormat === "keepass2" && (
-        <p className="text-sm text-muted-foreground">KeePass2 only supports login items.</p>
+      {(vaultFormat === "keepass2" || vaultFormat === "password-depot") && (
+        <p className="text-sm text-muted-foreground">
+          {vaultFormat === "keepass2" ? "KeePass2" : "Password Depot"} only supports login items.
+        </p>
       )}
 
       {showAdditionalItems && (

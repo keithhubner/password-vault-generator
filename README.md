@@ -1,6 +1,6 @@
 # Password Vault Generator
 
-🔐 Generate realistic test data for password managers including Bitwarden, LastPass, Keeper, Microsoft Edge, KeePassX, and KeePass2.
+🔐 Generate realistic test data for password managers including Bitwarden, LastPass, Keeper, Microsoft Edge, KeePassX, KeePass2, and Password Depot.
 
 Perfect for testing password manager integrations, security audits, and development workflows.
 
@@ -96,6 +96,7 @@ Go to **http://localhost:3000** and start generating vault data!
 | **Microsoft Edge** | CSV | Basic password export format |
 | **KeePassX** | CSV | Simple database export |
 | **KeePass2** | XML | Full database with groups, entries, metadata |
+| **Password Depot** | CSV | Semicolon-separated format with importance levels, categories |
 
 ## ⚙️ Configuration Options
 
@@ -209,6 +210,18 @@ The app will automatically show Civo branding when `NEXT_PUBLIC_HOSTED_ON=civo` 
 7. Check "Assign items to collections"
 8. Generate and download
 ```
+
+### Example 4: Password Depot CSV Export
+**Goal**: Generate Password Depot compatible data for migration testing
+```
+1. Select "Password Depot" as vault format
+2. Set "Number of Logins" to 100
+3. Check "Include weak passwords" and set to 25%
+4. Check "Use real website URLs" 
+5. Click "Generate Vault"
+6. Click "Download CSV"
+```
+**Result**: You'll get a semicolon-separated CSV file with fields: Description, Importance, Password, Last modified, Expiry Date, User Name, URL, Comments, and Category
 
 ## 🐛 Troubleshooting
 
