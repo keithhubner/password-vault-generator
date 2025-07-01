@@ -238,9 +238,13 @@ export default function PasswordVaultGeneratorImproved() {
 
         case "password-depot":
           vaultData = createPasswordDepotItems(
-            loginCount, useRealUrls,
-            useWeakPasswords, weakPasswordPercentage,
-            reusePasswords, passwordReusePercentage, passwordPool
+            loginCount,
+            useRealUrls,
+            useWeakPasswords,
+            weakPasswordPercentage,
+            reusePasswords,
+            passwordReusePercentage,
+            passwordPool
           )
           formattedData = JSON.stringify(vaultData, null, 2)
           break

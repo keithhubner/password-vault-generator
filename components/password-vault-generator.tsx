@@ -1727,8 +1727,10 @@ export default function Component() {
       const items = createPasswordDepotItems(
         loginCount,
         useRealUrls,
-        useWeakPasswords ? weakPasswordPercentage : 0,
-        reusePasswords ? passwordReusePercentage : 0,
+        useWeakPasswords,
+        weakPasswordPercentage,
+        reusePasswords,
+        passwordReusePercentage,
         passwordPool
       )
       setGeneratedData(JSON.stringify(items, null, 2))
