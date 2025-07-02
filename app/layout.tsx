@@ -6,9 +6,9 @@ export const metadata: Metadata = {
   description: 'Generate random test passwords for your applications',
   
   icons: {
-    icon: './favicon.ico',
-    shortcut: './favicon.ico',
-    apple: './favicon.ico',
+    icon: './favicon.svg',
+    shortcut: './favicon.svg',
+    apple: './favicon.svg',
   },
 }
 
