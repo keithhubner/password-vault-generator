@@ -2,7 +2,7 @@
 
 🔐 Generate realistic test data for password managers including Bitwarden, LastPass, Keeper, Microsoft Edge, KeePassX, KeePass2, and Password Depot.
 
-Perfect for testing password manager integrations, security audits, and development workflows.
+Perfect for testing password manager integrations, security audits, and development workflows. Available as both a **web interface** and **REST API**.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)
@@ -17,6 +17,7 @@ Perfect for testing password manager integrations, security audits, and developm
 - 📊 **Export multiple formats** (JSON, CSV, XML)
 - 🏗️ **Nested folders/collections** for complex organizational structures
 - ⚡ **Handle large datasets** (up to 10,000 items) with progress tracking
+- 🔗 **REST API** for programmatic vault generation
 
 ## 🚀 Quick Start
 
@@ -69,12 +70,228 @@ Go to **http://localhost:3000** and start generating vault data!
 - **Nested Collections**: Create hierarchical folder structures
 - **Large Datasets**: Generate thousands of items with progress tracking
 
+## 🔗 REST API
+
+The Password Vault Generator includes a REST API for programmatic access, perfect for CI/CD pipelines, automated testing, and integration with other tools.
+
+### API Endpoints
+
+#### Get Supported Formats
+```bash
+GET /api/vault/formats
+```
+
+**Response:**
+```json
+{
+  "message": "Supported password vault formats",
+  "formats": {
+    "bitwarden": {
+      "name": "Bitwarden",
+      "supportedVaultTypes": ["individual", "org"],
+      "supportedItemTypes": ["login", "secureNote", "creditCard", "identity"],
+      "organizationalFeatures": ["folders (individual)", "collections (org)", "nested collections (org only)"],
+      "outputFormat": "JSON"
+    },
+    "lastpass": {
+      "name": "LastPass",
+      "supportedVaultTypes": ["individual"],
+      "supportedItemTypes": ["login"],
+      "organizationalFeatures": [],
+      "outputFormat": "CSV"
+    }
+  }
+}
+```
+
+#### Generate Vault Data
+```bash
+POST /api/vault/generate
+Content-Type: application/json
+```
+
+### API Examples
+
+#### Basic Bitwarden Individual Vault
+```bash
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "bitwarden",
+    "vaultType": "individual", 
+    "loginCount": 50,
+    "useRealUrls": true,
+    "useWeakPasswords": false
+  }'
+```
+
+#### Bitwarden Organization with Collections
+```bash
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "bitwarden",
+    "vaultType": "org",
+    "loginCount": 100,
+    "secureNoteCount": 20,
+    "creditCardCount": 10,
+    "useCollections": true,
+    "useNestedCollections": true,
+    "collectionCount": 15,
+    "topLevelCollectionCount": 5,
+    "collectionNestingDepth": 3,
+    "distributeItems": true,
+    "useRealUrls": true,
+    "useWeakPasswords": true,
+    "weakPasswordPercentage": 25,
+    "reusePasswords": true,
+    "passwordReusePercentage": 15
+  }'
+```
+
+#### LastPass CSV Export
+```bash
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "lastpass",
+    "loginCount": 75,
+    "useRealUrls": true,
+    "useWeakPasswords": true,
+    "weakPasswordPercentage": 30
+  }' > lastpass_export.csv
+```
+
+#### KeePass2 XML Export
+```bash
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "keepass2",
+    "loginCount": 200,
+    "useRealUrls": false,
+    "reusePasswords": true,
+    "passwordReusePercentage": 20
+  }' > keepass2_export.xml
+```
+
+### API Parameters
+
+| Parameter | Type | Description | Applicable Formats |
+|-----------|------|-------------|-------------------|
+| `format` | string | **Required.** Vault format (`bitwarden`, `lastpass`, `keeper`, `edge`, `keepassx`, `keepass2`, `password-depot`) | All |
+| `vaultType` | string | Vault type (`individual`, `org`) | Bitwarden only |
+| `loginCount` | number | Number of login items (default: 50) | All |
+| `secureNoteCount` | number | Number of secure notes | Bitwarden only |
+| `creditCardCount` | number | Number of credit cards | Bitwarden only |
+| `identityCount` | number | Number of identity items | Bitwarden only |
+| `useRealUrls` | boolean | Use real website URLs vs fake ones | All |
+| `useWeakPasswords` | boolean | Include weak passwords | All |
+| `weakPasswordPercentage` | number | Percentage of weak passwords (1-100) | All |
+| `reusePasswords` | boolean | Enable password reuse | All |
+| `passwordReusePercentage` | number | Percentage of reused passwords (1-100) | All |
+| `useCollections` | boolean | Create collections | Bitwarden org only |
+| `useNestedCollections` | boolean | Create nested collection hierarchy | Bitwarden org only |
+| `collectionCount` | number | Number of collections | Bitwarden org only |
+| `topLevelCollectionCount` | number | Number of top-level collections | Bitwarden org only |
+| `collectionNestingDepth` | number | Max nesting depth (1-5) | Bitwarden org only |
+| `distributeItems` | boolean | Distribute items across collections | Bitwarden org only |
+
+### API Error Responses
+
+The API validates requests and returns appropriate error messages:
+
+```bash
+# Invalid vault type for non-Bitwarden formats
+{
+  "error": "Organization vaults are only supported for Bitwarden format"
+}
+
+# Invalid item types for non-Bitwarden formats  
+{
+  "error": "Secure notes are only supported for Bitwarden format"
+}
+
+# Invalid collection settings
+{
+  "error": "Collections are only supported for Bitwarden organization vaults"
+}
+```
+
+### Integration Examples
+
+#### GitHub Actions CI/CD
+```yaml
+- name: Generate test vault data
+  run: |
+    curl -X POST http://localhost:3000/api/vault/generate \
+      -H "Content-Type: application/json" \
+      -d '{"format": "bitwarden", "loginCount": 100}' \
+      > test-vault.json
+```
+
+#### Python Script
+```python
+import requests
+import json
+
+# Generate Bitwarden org vault
+payload = {
+    "format": "bitwarden",
+    "vaultType": "org", 
+    "loginCount": 500,
+    "useCollections": True,
+    "collectionCount": 20,
+    "useWeakPasswords": True,
+    "weakPasswordPercentage": 35
+}
+
+response = requests.post(
+    "http://localhost:3000/api/vault/generate",
+    json=payload
+)
+
+if response.status_code == 200:
+    vault_data = response.json()
+    with open("test_vault.json", "w") as f:
+        json.dump(vault_data, f, indent=2)
+else:
+    print(f"Error: {response.json()}")
+```
+
+#### Node.js/JavaScript
+```javascript
+const generateVault = async () => {
+  const response = await fetch('http://localhost:3000/api/vault/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      format: 'lastpass',
+      loginCount: 250,
+      useRealUrls: true,
+      useWeakPasswords: true,
+      weakPasswordPercentage: 40
+    })
+  });
+  
+  if (response.ok) {
+    const csvData = await response.text();
+    console.log('Generated CSV data:', csvData);
+  } else {
+    const error = await response.json();
+    console.error('API Error:', error.error);
+  }
+};
+```
+
 ## 💡 Use Cases
 
 ### For Developers
 - **API Testing**: Generate realistic data for password manager integrations
 - **Database Seeding**: Populate test environments with structured vault data
 - **UI/UX Testing**: Test how your app handles large datasets and various formats
+- **CI/CD Integration**: Automate test data generation in deployment pipelines
+- **Load Testing**: Generate large datasets programmatically for performance testing
 
 ### For Security Teams
 - **Password Audits**: Generate datasets with known weak passwords for testing detection tools
@@ -173,7 +390,9 @@ The app will automatically show Civo branding when `NEXT_PUBLIC_HOSTED_ON=civo` 
 
 ## 📝 Step-by-Step Examples
 
-### Example 1: Basic Bitwarden Export
+### Web Interface Examples
+
+#### Example 1: Basic Bitwarden Export
 **Goal**: Create a simple Bitwarden vault for testing
 ```
 1. Open http://localhost:3000
@@ -185,7 +404,7 @@ The app will automatically show Civo branding when `NEXT_PUBLIC_HOSTED_ON=civo` 
 ```
 **Result**: You'll get a JSON file with 50 realistic login entries
 
-### Example 2: Security Testing Dataset
+#### Example 2: Security Testing Dataset
 **Goal**: Test your password manager's security scanning
 ```
 1. Select any vault format
@@ -198,7 +417,7 @@ The app will automatically show Civo branding when `NEXT_PUBLIC_HOSTED_ON=civo` 
 8. Run security audit to see weak/reused passwords detected
 ```
 
-### Example 3: Large Organization Vault
+#### Example 3: Large Organization Vault
 **Goal**: Test how your system handles enterprise data
 ```
 1. Select "Bitwarden" format
@@ -211,17 +430,58 @@ The app will automatically show Civo branding when `NEXT_PUBLIC_HOSTED_ON=civo` 
 8. Generate and download
 ```
 
-### Example 4: Password Depot CSV Export
-**Goal**: Generate Password Depot compatible data for migration testing
+### API Examples
+
+#### Example 4: Automated Test Data Generation
+**Goal**: Generate vault data in your CI/CD pipeline
+```bash
+# Generate Bitwarden test data for automated testing
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "bitwarden",
+    "loginCount": 500,
+    "useWeakPasswords": true,
+    "weakPasswordPercentage": 35,
+    "reusePasswords": true,
+    "passwordReusePercentage": 20
+  }' > test-vault.json
+
+# Use in your test suite
+python security_test.py --vault-file test-vault.json
 ```
-1. Select "Password Depot" as vault format
-2. Set "Number of Logins" to 100
-3. Check "Include weak passwords" and set to 25%
-4. Check "Use real website URLs" 
-5. Click "Generate Vault"
-6. Click "Download CSV"
+
+#### Example 5: Bulk Export for Migration Testing  
+**Goal**: Generate multiple format exports for migration testing
+```bash
+# Generate different formats for the same dataset
+formats=("bitwarden" "lastpass" "keepass2" "keeper")
+
+for format in "${formats[@]}"; do
+  curl -X POST http://localhost:3000/api/vault/generate \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"format\": \"$format\",
+      \"loginCount\": 200,
+      \"useRealUrls\": true
+    }" > "migration_test_${format}.$([ "$format" = "keepass2" ] && echo "xml" || echo "$([ "$format" = "bitwarden" ] && echo "json" || echo "csv")")"
+done
 ```
-**Result**: You'll get a semicolon-separated CSV file with fields: Description, Importance, Password, Last modified, Expiry Date, User Name, URL, Comments, and Category
+
+#### Example 6: Password Depot CSV Export
+**Goal**: Generate Password Depot compatible data via API
+```bash
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "password-depot",
+    "loginCount": 100,
+    "useWeakPasswords": true,
+    "weakPasswordPercentage": 25,
+    "useRealUrls": true
+  }' > password_depot_export.csv
+```
+**Result**: Semicolon-separated CSV with fields: Description, Importance, Password, Last modified, Expiry Date, User Name, URL, Comments, and Category
 
 ## 🐛 Troubleshooting
 
