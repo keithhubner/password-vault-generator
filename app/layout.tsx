@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -19,7 +20,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Script
+          defer
+          data-domain="passwordvaultgenerator.com"
+          src="https://plausible.jankylabs.co.uk/js/script.js"
+        />
+        {children}
+      </body>
     </html>
   )
 }
