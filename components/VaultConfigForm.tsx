@@ -83,46 +83,49 @@ export const VaultConfigForm: React.FC<VaultConfigFormProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="en">English (en)</SelectItem>
-            <SelectItem value="zh_CN">Chinese Simplified (zh_CN)</SelectItem>
-            <SelectItem value="zh_TW">Chinese Traditional (zh_TW)</SelectItem>
+            {/* Fully supported locales with native faker instances */}
             <SelectItem value="ar">Arabic (ar)</SelectItem>
-            <SelectItem value="ru">Russian (ru)</SelectItem>
+            <SelectItem value="da">Danish (da)</SelectItem>
+            <SelectItem value="de">German (de)</SelectItem>
+            <SelectItem value="el">Greek (el)</SelectItem>
+            <SelectItem value="es">Spanish (es)</SelectItem>
+            <SelectItem value="fi">Finnish (fi)</SelectItem>
+            <SelectItem value="fr">French (fr)</SelectItem>
+            <SelectItem value="he">Hebrew (he)</SelectItem>
+            <SelectItem value="hr">Croatian (hr)</SelectItem>
+            <SelectItem value="hu">Hungarian (hu)</SelectItem>
+            <SelectItem value="it">Italian (it)</SelectItem>
             <SelectItem value="ja">Japanese (ja)</SelectItem>
             <SelectItem value="ko">Korean (ko)</SelectItem>
-            <SelectItem value="de">German (de)</SelectItem>
-            <SelectItem value="fr">French (fr)</SelectItem>
-            <SelectItem value="es">Spanish (es)</SelectItem>
-            <SelectItem value="it">Italian (it)</SelectItem>
-            <SelectItem value="pt">Portuguese (pt)</SelectItem>
-            <SelectItem value="nl">Dutch (nl)</SelectItem>
-            <SelectItem value="sv">Swedish (sv)</SelectItem>
-            <SelectItem value="no">Norwegian (no)</SelectItem>
-            <SelectItem value="da">Danish (da)</SelectItem>
-            <SelectItem value="fi">Finnish (fi)</SelectItem>
-            <SelectItem value="pl">Polish (pl)</SelectItem>
-            <SelectItem value="cs">Czech (cs)</SelectItem>
-            <SelectItem value="sk">Slovak (sk)</SelectItem>
-            <SelectItem value="hu">Hungarian (hu)</SelectItem>
-            <SelectItem value="ro">Romanian (ro)</SelectItem>
-            <SelectItem value="bg">Bulgarian (bg)</SelectItem>
-            <SelectItem value="hr">Croatian (hr)</SelectItem>
-            <SelectItem value="sl">Slovenian (sl)</SelectItem>
-            <SelectItem value="et">Estonian (et)</SelectItem>
             <SelectItem value="lv">Latvian (lv)</SelectItem>
-            <SelectItem value="lt">Lithuanian (lt)</SelectItem>
-            <SelectItem value="el">Greek (el)</SelectItem>
-            <SelectItem value="tr">Turkish (tr)</SelectItem>
-            <SelectItem value="he">Hebrew (he)</SelectItem>
-            <SelectItem value="hi">Hindi (hi)</SelectItem>
+            <SelectItem value="nl">Dutch (nl)</SelectItem>
+            <SelectItem value="pl">Polish (pl)</SelectItem>
+            <SelectItem value="ro">Romanian (ro)</SelectItem>
+            <SelectItem value="ru">Russian (ru)</SelectItem>
+            <SelectItem value="sk">Slovak (sk)</SelectItem>
+            <SelectItem value="sv">Swedish (sv)</SelectItem>
             <SelectItem value="th">Thai (th)</SelectItem>
+            <SelectItem value="tr">Turkish (tr)</SelectItem>
             <SelectItem value="vi">Vietnamese (vi)</SelectItem>
-            <SelectItem value="id">Indonesian (id)</SelectItem>
-            <SelectItem value="ms">Malay (ms)</SelectItem>
-            <SelectItem value="tl">Filipino (tl)</SelectItem>
+            <SelectItem value="zh_CN">Chinese Simplified (zh_CN)</SelectItem>
+            <SelectItem value="zh_TW">Chinese Traditional (zh_TW)</SelectItem>
+            {/* Fallback locales (use English faker with custom content) */}
+            <SelectItem value="bg">Bulgarian (bg) *</SelectItem>
+            <SelectItem value="cs">Czech (cs) *</SelectItem>
+            <SelectItem value="et">Estonian (et) *</SelectItem>
+            <SelectItem value="hi">Hindi (hi) *</SelectItem>
+            <SelectItem value="id">Indonesian (id) *</SelectItem>
+            <SelectItem value="lt">Lithuanian (lt) *</SelectItem>
+            <SelectItem value="ms">Malay (ms) *</SelectItem>
+            <SelectItem value="no">Norwegian (no) *</SelectItem>
+            <SelectItem value="pt">Portuguese (pt) *</SelectItem>
+            <SelectItem value="sl">Slovenian (sl) *</SelectItem>
+            <SelectItem value="tl">Filipino (tl) *</SelectItem>
           </SelectContent>
         </Select>
         <p className="text-sm text-muted-foreground">
-          Select language for generating names, addresses, and text content with non-standard characters
+          Select language for generating names, addresses, and text content with non-standard characters.<br />
+          <span className="text-xs">* Fallback locales use English data with custom locale-specific content</span>
         </p>
       </div>
 

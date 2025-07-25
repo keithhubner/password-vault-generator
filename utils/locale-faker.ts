@@ -1,81 +1,71 @@
 import { 
   faker,
   fakerAR,
-  fakerCS,
   fakerDA,
   fakerDE,
   fakerEL,
   fakerES,
-  fakerET,
   fakerFI,
   fakerFR,
   fakerHE,
-  fakerHI,
   fakerHR,
   fakerHU,
-  fakerID,
   fakerIT,
   fakerJA,
   fakerKO,
-  fakerLT,
   fakerLV,
-  fakerMS,
   fakerNL,
-  fakerNO,
   fakerPL,
-  fakerPT,
   fakerRO,
   fakerRU,
   fakerSK,
-  fakerSL,
   fakerSV,
   fakerTH,
   fakerTR,
   fakerVI,
   fakerZH_CN,
-  fakerZH_TW,
-  fakerTL,
-  fakerBG
+  fakerZH_TW
 } from "@faker-js/faker"
 
 const localeMap: Record<string, typeof faker> = {
   en: faker,
   ar: fakerAR,
-  bg: fakerBG,
-  cs: fakerCS,
   da: fakerDA,
   de: fakerDE,
   el: fakerEL,
   es: fakerES,
-  et: fakerET,
   fi: fakerFI,
   fr: fakerFR,
   he: fakerHE,
-  hi: fakerHI,
   hr: fakerHR,
   hu: fakerHU,
-  id: fakerID,
   it: fakerIT,
   ja: fakerJA,
   ko: fakerKO,
-  lt: fakerLT,
   lv: fakerLV,
-  ms: fakerMS,
   nl: fakerNL,
-  no: fakerNO,
   pl: fakerPL,
-  pt: fakerPT,
   ro: fakerRO,
   ru: fakerRU,
   sk: fakerSK,
-  sl: fakerSL,
   sv: fakerSV,
   th: fakerTH,
-  tl: fakerTL,
   tr: fakerTR,
   vi: fakerVI,
   zh_CN: fakerZH_CN,
   zh_TW: fakerZH_TW,
+  // Fallback mappings for unsupported locales - they'll use default faker
+  bg: faker, // Bulgarian -> English fallback
+  cs: faker, // Czech -> English fallback
+  et: faker, // Estonian -> English fallback
+  hi: faker, // Hindi -> English fallback
+  id: faker, // Indonesian -> English fallback
+  lt: faker, // Lithuanian -> English fallback
+  ms: faker, // Malay -> English fallback
+  no: faker, // Norwegian -> English fallback
+  pt: faker, // Portuguese -> English fallback
+  sl: faker, // Slovenian -> English fallback
+  tl: faker, // Filipino -> English fallback
 }
 
 export function getFakerForLocale(locale: string): typeof faker {
