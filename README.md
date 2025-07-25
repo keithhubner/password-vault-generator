@@ -18,6 +18,7 @@ Perfect for testing password manager integrations, security audits, and developm
 - 🏗️ **Nested folders/collections** for complex organizational structures
 - ⚡ **Handle large datasets** (up to 10,000 items) with progress tracking
 - 🔗 **REST API** for programmatic vault generation
+- 🌍 **Multi-language support** with 35+ locales and non-standard characters
 
 ## 🚀 Quick Start
 
@@ -69,6 +70,58 @@ Go to **http://localhost:3000** and start generating vault data!
 - **Real URLs**: Use actual website domains vs. fake ones
 - **Nested Collections**: Create hierarchical folder structures
 - **Large Datasets**: Generate thousands of items with progress tracking
+- **Multi-Language Support**: Generate test data with international characters
+
+## 🌍 Multi-Language Support
+
+Test password managers with international character sets and non-ASCII data for comprehensive compatibility testing.
+
+### Supported Languages & Character Sets
+
+**European Languages (with accented characters):**
+- **French (fr)**: à, â, é, è, ê, ë, ç → `Société Générale`, `Hôtel Première Étoile`
+- **German (de)**: ä, ö, ü, ß → `Müller & Söhne GmbH`, `Büroservice Zürich`
+- **Spanish (es)**: á, é, í, ñ, ó, ú → `Comunicación y Más`, `José María`
+- **Italian (it)**: à, è, é, ì, ò, ù → `Società Italiana`, `Università`
+- **Portuguese (pt)**: á, â, ã, ç, é, ê, í, ó, ô, õ, ú → `São João`, `Comunicação`
+
+**Non-Latin Scripts:**
+- **Chinese**: 中文 (Simplified & Traditional)
+- **Arabic**: العربية (right-to-left text)
+- **Russian**: кириллица (Cyrillic)
+- **Japanese**: 日本語 (Hiragana, Katakana, Kanji)
+- **Korean**: 한국어 (Hangul)
+- **Greek**: ελληνικά
+- **Hebrew**: עברית
+- **Thai**: ไทย
+- **Hindi**: हिन्दी
+
+**Additional European Languages:** Dutch, Swedish, Norwegian, Danish, Finnish, Polish, Czech, Slovak, Hungarian, Romanian, Bulgarian, Croatian, and more.
+
+### Language Selection
+
+**Web Interface:** Use the Language/Locale dropdown to select from 35+ supported locales.
+
+**API Usage:** Include the `language` parameter in your requests:
+```bash
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "bitwarden",
+    "language": "fr",
+    "loginCount": 50
+  }'
+```
+
+### International Character Testing
+
+Perfect for testing:
+- **UTF-8 Import/Export**: Verify password managers handle international encoding
+- **Search Functionality**: Test search with accented and non-Latin characters  
+- **Display Rendering**: Ensure proper font and character rendering
+- **Data Integrity**: Verify no character corruption during import/export
+- **Right-to-Left Languages**: Test Arabic and Hebrew text direction
+- **Mixed Scripts**: Test handling of multiple character sets in one vault
 
 ## 🔗 REST API
 
@@ -175,11 +228,46 @@ curl -X POST http://localhost:3000/api/vault/generate \
   }' > keepass2_export.xml
 ```
 
+#### International Character Testing
+```bash
+# Generate German vault with umlauts and special characters
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "bitwarden",
+    "language": "de",
+    "loginCount": 100,
+    "useRealUrls": true
+  }' > german_vault.json
+
+# Generate French vault with accented characters  
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "lastpass",
+    "language": "fr", 
+    "loginCount": 75,
+    "useWeakPasswords": true
+  }' > french_vault.csv
+
+# Generate Chinese vault with Traditional characters
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "bitwarden",
+    "language": "zh_TW",
+    "vaultType": "org",
+    "loginCount": 50,
+    "useCollections": true
+  }' > chinese_vault.json
+```
+
 ### API Parameters
 
 | Parameter | Type | Description | Applicable Formats |
 |-----------|------|-------------|-------------------|
 | `format` | string | **Required.** Vault format (`bitwarden`, `lastpass`, `keeper`, `edge`, `keepassx`, `keepass2`, `password-depot`) | All |
+| `language` | string | Language/locale code for international characters (`en`, `fr`, `de`, `es`, `it`, `pt`, `ru`, `ja`, `zh_CN`, etc.) Default: `en` | All |
 | `vaultType` | string | Vault type (`individual`, `org`) | Bitwarden only |
 | `loginCount` | number | Number of login items (default: 50) | All |
 | `secureNoteCount` | number | Number of secure notes | Bitwarden only |
