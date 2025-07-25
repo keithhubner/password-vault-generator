@@ -54,18 +54,6 @@ const localeMap: Record<string, typeof faker> = {
   vi: fakerVI,
   zh_CN: fakerZH_CN,
   zh_TW: fakerZH_TW,
-  // Fallback mappings for unsupported locales - they'll use default faker
-  bg: faker, // Bulgarian -> English fallback
-  cs: faker, // Czech -> English fallback
-  et: faker, // Estonian -> English fallback
-  hi: faker, // Hindi -> English fallback
-  id: faker, // Indonesian -> English fallback
-  lt: faker, // Lithuanian -> English fallback
-  ms: faker, // Malay -> English fallback
-  no: faker, // Norwegian -> English fallback
-  pt: faker, // Portuguese -> English fallback
-  sl: faker, // Slovenian -> English fallback
-  tl: faker, // Filipino -> English fallback
 }
 
 export function getFakerForLocale(locale: string): typeof faker {

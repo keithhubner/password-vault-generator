@@ -18,7 +18,7 @@ Perfect for testing password manager integrations, security audits, and developm
 - 🏗️ **Nested folders/collections** for complex organizational structures
 - ⚡ **Handle large datasets** (up to 10,000 items) with progress tracking
 - 🔗 **REST API** for programmatic vault generation
-- 🌍 **Multi-language support** with 35+ locales and non-standard characters
+- 🌍 **Multi-language support** with 26 locales and non-standard characters
 
 ## 🚀 Quick Start
 
@@ -83,7 +83,6 @@ Test password managers with international character sets and non-ASCII data for 
 - **German (de)**: ä, ö, ü, ß → `Müller & Söhne GmbH`, `Büroservice Zürich`
 - **Spanish (es)**: á, é, í, ñ, ó, ú → `Comunicación y Más`, `José María`
 - **Italian (it)**: à, è, é, ì, ò, ù → `Società Italiana`, `Università`
-- **Portuguese (pt)**: á, â, ã, ç, é, ê, í, ó, ô, õ, ú → `São João`, `Comunicação`
 
 **Non-Latin Scripts:**
 - **Chinese**: 中文 (Simplified & Traditional)
@@ -94,13 +93,13 @@ Test password managers with international character sets and non-ASCII data for 
 - **Greek**: ελληνικά
 - **Hebrew**: עברית
 - **Thai**: ไทย
-- **Hindi**: हिन्दी
+- **Vietnamese**: Tiếng Việt
 
-**Additional European Languages:** Dutch, Swedish, Norwegian, Danish, Finnish, Polish, Czech, Slovak, Hungarian, Romanian, Bulgarian, Croatian, and more.
+**Additional European Languages:** Dutch, Swedish, Danish, Finnish, Polish, Slovak, Hungarian, Romanian, Croatian, and Latvian.
 
 ### Language Selection
 
-**Web Interface:** Use the Language/Locale dropdown to select from 35+ supported locales.
+**Web Interface:** Use the Language/Locale dropdown to select from 26 supported locales.
 
 **API Usage:** Include the `language` parameter in your requests:
 ```bash
