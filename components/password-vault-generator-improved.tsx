@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from "react"
 import { faker } from "@faker-js/faker"
+import { getFakerForLocale } from "../utils/locale-faker"
 import { Button } from "@/components/ui/button"
 import { Lock } from "lucide-react"
 import { 
@@ -47,6 +48,18 @@ export default function PasswordVaultGeneratorImproved() {
   const [identityCount, setIdentityCount] = useState(10)
   const [vaultType, setVaultType] = useState<VaultType>("individual")
   const [vaultFormat, setVaultFormat] = useState<VaultFormat>("bitwarden")
+  const [language, setLanguage] = useState("en")
+
+  // Debug language changes
+  const handleLanguageChange = (newLanguage: string) => {
+    console.log(`Language changed from ${language} to ${newLanguage}`)
+    setLanguage(newLanguage)
+  }
+
+  // Get current language state (this ensures we have the latest value)
+  const getCurrentLanguage = useCallback(() => {
+    return language
+  }, [language])
   const [useRealUrls, setUseRealUrls] = useState(false)
   const [useCollections, setUseCollections] = useState(false)
   const [collectionCount, setCollectionCount] = useState(10)
@@ -121,11 +134,14 @@ export default function PasswordVaultGeneratorImproved() {
         securelyEraseData(generatedDataRef.current)
       }
 
+      const currentLang = language
+      console.log(`Generating vault with language: ${currentLang} (state: ${language})`)
       const passwordPool = initializePasswordPool(
         reusePasswords,
         loginCount,
         useWeakPasswords,
-        weakPasswordPercentage
+        weakPasswordPercentage,
+        currentLang
       )
 
       let progressInterval: NodeJS.Timeout | null = null
@@ -148,10 +164,11 @@ export default function PasswordVaultGeneratorImproved() {
               loginCount, secureNoteCount, creditCardCount, identityCount,
               vaultType, useRealUrls, [], false,
               useWeakPasswords, weakPasswordPercentage,
-              reusePasswords, passwordReusePercentage, passwordPool
+              reusePasswords, passwordReusePercentage, passwordPool, currentLang
             )
           } else {
-            const orgId = faker.string.uuid()
+            const localeFaker = getFakerForLocale(currentLang)
+            const orgId = localeFaker.string.uuid()
             let collections: { id: string; organizationId: string; name: string; externalId: null }[] = []
             
             if (useCollections) {
@@ -165,7 +182,7 @@ export default function PasswordVaultGeneratorImproved() {
                 collectionNames.sort((a, b) => a.split("/").length - b.split("/").length)
                 
                 collections = collectionNames.map((name) => ({
-                  id: faker.string.uuid(),
+                  id: localeFaker.string.uuid(),
                   organizationId: orgId,
                   name: name,
                   externalId: null,
@@ -173,7 +190,7 @@ export default function PasswordVaultGeneratorImproved() {
               } else {
                 const collectionNames = generateUniqueCollectionNames(collectionCount)
                 collections = collectionNames.map((name) => ({
-                  id: faker.string.uuid(),
+                  id: localeFaker.string.uuid(),
                   organizationId: orgId,
                   name: name,
                   externalId: null,
@@ -185,7 +202,7 @@ export default function PasswordVaultGeneratorImproved() {
               loginCount, secureNoteCount, creditCardCount, identityCount,
               vaultType, useRealUrls, collections, distributeItems,
               useWeakPasswords, weakPasswordPercentage,
-              reusePasswords, passwordReusePercentage, passwordPool
+              reusePasswords, passwordReusePercentage, passwordPool, currentLang
             )
           }
           formattedData = JSON.stringify(vaultData, null, 2)
@@ -278,7 +295,7 @@ export default function PasswordVaultGeneratorImproved() {
     distributeItems, useNestedFolders, useRandomDepthNesting,
     useNestedCollections, topLevelCollectionCount, collectionNestingDepth,
     totalCollectionCount, useWeakPasswords, weakPasswordPercentage,
-    reusePasswords, passwordReusePercentage, simulateProgress, validateInputs
+    reusePasswords, passwordReusePercentage, language, simulateProgress, validateInputs
   ])
 
   const downloadData = useCallback((format = "json") => {
@@ -391,6 +408,8 @@ export default function PasswordVaultGeneratorImproved() {
             onVaultFormatChange={handleVaultFormatChange}
             vaultType={vaultType}
             onVaultTypeChange={setVaultType}
+            language={language}
+            onLanguageChange={handleLanguageChange}
             loginCount={loginCount}
             onLoginCountChange={setLoginCount}
             secureNoteCount={secureNoteCount}

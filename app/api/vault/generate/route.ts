@@ -21,6 +21,7 @@ import { VaultGenerationOptions } from '@/types'
 
 interface VaultGenerateRequest extends Partial<VaultGenerationOptions> {
   format: 'bitwarden' | 'lastpass' | 'keeper' | 'edge' | 'keepassx' | 'keepass2' | 'password-depot'
+  language?: string
 }
 
 function validateRequest(body: VaultGenerateRequest): { isValid: boolean; error?: string } {
@@ -86,6 +87,7 @@ function buildGenerationOptions(body: VaultGenerateRequest): VaultGenerationOpti
     weakPasswordPercentage: 20,
     reusePasswords: false,
     passwordReusePercentage: 10,
+    language: 'en',
   }
 
   // Override with provided values, applying format constraints
@@ -117,7 +119,8 @@ async function generateVault(options: VaultGenerationOptions) {
     options.reusePasswords,
     totalCount,
     options.useWeakPasswords,
-    options.weakPasswordPercentage
+    options.weakPasswordPercentage,
+    options.language
   )
 
   switch (options.vaultFormat) {
@@ -152,7 +155,8 @@ async function generateVault(options: VaultGenerationOptions) {
         options.weakPasswordPercentage,
         options.reusePasswords,
         options.passwordReusePercentage,
-        passwordPool
+        passwordPool,
+        options.language
       )
     
     case 'lastpass':

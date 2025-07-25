@@ -30,6 +30,7 @@ export interface VaultGenerationOptions {
   weakPasswordPercentage: number
   reusePasswords: boolean
   passwordReusePercentage: number
+  language: string
 }
 
 export interface GenerationProgress {
