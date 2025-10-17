@@ -5,8 +5,9 @@ export * from './keepassx'
 export * from './keepass2'
 export * from './keeper'
 export * from './password-depot'
+export * from './onepassword'
 
-export type VaultFormat = 'bitwarden' | 'lastpass' | 'keeper' | 'edge' | 'keepassx' | 'keepass2' | 'password-depot'
+export type VaultFormat = 'bitwarden' | 'lastpass' | 'keeper' | 'edge' | 'keepassx' | 'keepass2' | 'password-depot' | '1password'
 export type VaultType = 'individual' | 'org'
 
 export interface VaultGenerationOptions {
@@ -31,6 +32,10 @@ export interface VaultGenerationOptions {
   reusePasswords: boolean
   passwordReusePercentage: number
   language: string
+  useTags: boolean
+  tagCount: number
+  distributeItemsToTags: boolean
+  taggedItemPercentage: number
 }
 
 export interface GenerationProgress {

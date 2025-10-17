@@ -38,7 +38,7 @@ export const VaultConfigForm: React.FC<VaultConfigFormProps> = ({
   identityCount,
   onIdentityCountChange,
 }) => {
-  const showAdditionalItems = !["lastpass", "edge", "keepassx", "keepass2", "password-depot"].includes(vaultFormat)
+  const showAdditionalItems = !["lastpass", "edge", "keepassx", "keepass2", "password-depot", "1password"].includes(vaultFormat)
 
   return (
     <div className="space-y-4">
@@ -56,6 +56,7 @@ export const VaultConfigForm: React.FC<VaultConfigFormProps> = ({
             <SelectItem value="keepassx">KeePassX</SelectItem>
             <SelectItem value="keepass2">KeePass2</SelectItem>
             <SelectItem value="password-depot">Password Depot</SelectItem>
+            <SelectItem value="1password">1Password</SelectItem>
           </SelectContent>
         </Select>
       </div>

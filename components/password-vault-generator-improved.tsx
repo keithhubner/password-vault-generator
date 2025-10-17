@@ -10,7 +10,8 @@ import {
   VaultType, 
   VaultGenerationOptions, 
   GenerationProgress, 
-  GenerationError 
+  GenerationError,
+  OnePasswordItem
 } from "../types"
 import { initializePasswordPool } from "../utils/password-generators"
 import { generateUniqueCollectionNames, generateHierarchicalCollections, ensureParentPaths } from "../utils/collection-generators"
@@ -19,6 +20,7 @@ import {
   formatEdgeToCsv, 
   formatKeePassXToCsv, 
   formatKeeperToCsv,
+  formatOnePasswordToCsv,
   createDownloadBlob,
   downloadFile,
   securelyEraseData
@@ -30,11 +32,13 @@ import { createKeePassXItem } from "../generators/keepassx-generator"
 import { createKeePass2File, convertKeePass2ToXML } from "../generators/keepass2-generator"
 import { generateKeeperVault } from "../generators/keeper-generator"
 import { createPasswordDepotItems, convertPasswordDepotToCSV } from "../generators/password-depot-generator"
+import { createOnePasswordItem } from "../generators/onepassword-generator"
 import { ErrorBoundary } from "./ErrorBoundary"
 import { ProgressIndicator } from "./ProgressIndicator"
 import { VaultConfigForm } from "./VaultConfigForm"
 import { PasswordOptionsPanel } from "./PasswordOptionsPanel"
 import { CollectionSettings } from "./CollectionSettings"
+import { TagSettings } from "./TagSettings"
 import { ExportButtons } from "./ExportButtons"
 import { VaultPreview } from "./VaultPreview"
 import { DebugEnv } from "./DebugEnv"
@@ -75,6 +79,11 @@ export default function PasswordVaultGeneratorImproved() {
   const [weakPasswordPercentage, setWeakPasswordPercentage] = useState(20)
   const [reusePasswords, setReusePasswords] = useState(false)
   const [passwordReusePercentage, setPasswordReusePercentage] = useState(30)
+  
+  // Tag-related states (for 1Password)
+  const [useTags, setUseTags] = useState(false)
+  const [tagCount, setTagCount] = useState(10)
+  const [taggedItemPercentage, setTaggedItemPercentage] = useState(60)
   
   // Progress and error states
   const [isGenerating, setIsGenerating] = useState(false)
@@ -266,6 +275,22 @@ export default function PasswordVaultGeneratorImproved() {
           formattedData = JSON.stringify(vaultData, null, 2)
           break
 
+        case "1password":
+          vaultData = createOnePasswordItem(
+            loginCount,
+            useRealUrls,
+            useWeakPasswords,
+            weakPasswordPercentage,
+            reusePasswords,
+            passwordReusePercentage,
+            passwordPool,
+            useTags,
+            tagCount,
+            taggedItemPercentage
+          )
+          formattedData = formatOnePasswordToCsv(vaultData as OnePasswordItem[])
+          break
+
         default:
           throw new Error(`Unsupported vault format: ${vaultFormat}`)
       }
@@ -295,7 +320,9 @@ export default function PasswordVaultGeneratorImproved() {
     distributeItems, useNestedFolders, useRandomDepthNesting,
     useNestedCollections, topLevelCollectionCount, collectionNestingDepth,
     totalCollectionCount, useWeakPasswords, weakPasswordPercentage,
-    reusePasswords, passwordReusePercentage, language, simulateProgress, validateInputs
+    reusePasswords, passwordReusePercentage, language, 
+    useTags, tagCount, taggedItemPercentage,
+    simulateProgress, validateInputs
   ])
 
   const downloadData = useCallback((format = "json") => {
@@ -346,6 +373,11 @@ export default function PasswordVaultGeneratorImproved() {
         case "password-depot":
           content = convertPasswordDepotToCSV(JSON.parse(generatedData))
           filename = "password_depot_export.csv"
+          type = "text/csv"
+          break
+        case "1password":
+          content = generatedData // Data is already CSV formatted
+          filename = "1password_export.csv"
           type = "text/csv"
           break
         default:
@@ -454,6 +486,16 @@ export default function PasswordVaultGeneratorImproved() {
             onUseNestedFoldersChange={setUseNestedFolders}
             useRandomDepthNesting={useRandomDepthNesting}
             onUseRandomDepthNestingChange={setUseRandomDepthNesting}
+          />
+
+          <TagSettings
+            vaultFormat={vaultFormat}
+            useTags={useTags}
+            onUseTagsChange={setUseTags}
+            tagCount={tagCount}
+            onTagCountChange={setTagCount}
+            taggedItemPercentage={taggedItemPercentage}
+            onTaggedItemPercentageChange={setTaggedItemPercentage}
           />
 
           <Button onClick={generateVault} disabled={isGenerating} className="w-full">

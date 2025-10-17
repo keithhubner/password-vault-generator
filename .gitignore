@@ -38,3 +38,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env
+
+# Claude Code files
+CLAUDE.md
+.claude/

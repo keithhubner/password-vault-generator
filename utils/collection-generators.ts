@@ -95,6 +95,70 @@ export const generateHierarchicalCollections = (
   return Array.from(allCollections)
 }
 
+// Tag generators for 1Password-style tagging
+export const generateUniqueTags = (count: number): string[] => {
+  // Start with department names for tags
+  let tags = [...businessDepartments]
+
+  // Add business functions if we need more
+  if (count > tags.length) {
+    tags = tags.concat(businessFunctions)
+  }
+
+  // Add some generic organizational tags
+  if (count > tags.length) {
+    const additionalTags = [
+      "Personal", "Work", "Shared", "Important", "Archive", "Temp", 
+      "Internal", "External", "Confidential", "Public", "Development", 
+      "Production", "Staging", "Testing", "Documentation", "Tools",
+      "Vendor", "Client", "Partner", "Emergency", "Backup"
+    ]
+    tags = tags.concat(additionalTags)
+  }
+
+  // Generate numbered tags if still need more
+  if (count > tags.length) {
+    const neededMore = count - tags.length
+    for (let i = 1; i <= neededMore; i++) {
+      tags.push(`Tag${i}`)
+    }
+  }
+
+  // Return shuffled unique tags
+  return tags.sort(() => 0.5 - Math.random()).slice(0, count)
+}
+
+export const distributeItemsToTags = (
+  itemCount: number, 
+  tags: string[], 
+  taggedPercentage: number = 60,
+  maxTagsPerItem: number = 3
+): string[] => {
+  const results: string[] = []
+  const taggedItemCount = Math.floor(itemCount * (taggedPercentage / 100))
+
+  for (let i = 0; i < itemCount; i++) {
+    if (i < taggedItemCount) {
+      // Determine how many tags this item should have (1-3)
+      const numTags = Math.floor(Math.random() * maxTagsPerItem) + 1
+      const itemTags = []
+      
+      // Select random tags without duplication for this item
+      const shuffledTags = [...tags].sort(() => 0.5 - Math.random())
+      for (let j = 0; j < Math.min(numTags, shuffledTags.length); j++) {
+        itemTags.push(shuffledTags[j])
+      }
+      
+      results.push(itemTags.join(','))
+    } else {
+      // No tags for this item
+      results.push('')
+    }
+  }
+
+  return results
+}
+
 export const ensureParentPaths = (collections: string[]): string[] => {
   const result = new Set<string>()
 

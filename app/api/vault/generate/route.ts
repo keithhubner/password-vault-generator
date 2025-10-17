@@ -6,7 +6,8 @@ import { createEdgePasswordItem } from '@/generators/edge-generator'
 import { createKeePassXItem } from '@/generators/keepassx-generator'
 import { createKeePass2File, convertKeePass2ToXML } from '@/generators/keepass2-generator'
 import { createPasswordDepotItems, convertPasswordDepotToCSV } from '@/generators/password-depot-generator'
-import { formatLastPassToCsv, formatEdgeToCsv, formatKeePassXToCsv, formatKeeperToCsv } from '@/utils/data-formatters'
+import { createOnePasswordItem } from '@/generators/onepassword-generator'
+import { formatLastPassToCsv, formatEdgeToCsv, formatKeePassXToCsv, formatKeeperToCsv, formatOnePasswordToCsv } from '@/utils/data-formatters'
 import { initializePasswordPool } from '@/utils/password-generators'
 import { generateUniqueCollectionNames, generateHierarchicalCollections } from '@/utils/collection-generators'
 import { 
@@ -20,7 +21,7 @@ import {
 import { VaultGenerationOptions } from '@/types'
 
 interface VaultGenerateRequest extends Partial<VaultGenerationOptions> {
-  format: 'bitwarden' | 'lastpass' | 'keeper' | 'edge' | 'keepassx' | 'keepass2' | 'password-depot'
+  format: 'bitwarden' | 'lastpass' | 'keeper' | 'edge' | 'keepassx' | 'keepass2' | 'password-depot' | '1password'
   language?: string
 }
 
@@ -28,7 +29,7 @@ function validateRequest(body: VaultGenerateRequest): { isValid: boolean; error?
   const { format, vaultType } = body
 
   // Validate format
-  const supportedFormats = ['bitwarden', 'lastpass', 'keeper', 'edge', 'keepassx', 'keepass2', 'password-depot']
+  const supportedFormats = ['bitwarden', 'lastpass', 'keeper', 'edge', 'keepassx', 'keepass2', 'password-depot', '1password']
   if (!supportedFormats.includes(format)) {
     return { isValid: false, error: `Unsupported format: ${format}` }
   }
@@ -62,6 +63,11 @@ function validateRequest(body: VaultGenerateRequest): { isValid: boolean; error?
     }
   }
 
+  // Validate tag constraints
+  if (body.useTags && format !== '1password') {
+    return { isValid: false, error: 'Tags are only supported for 1Password format' }
+  }
+
   return { isValid: true }
 }
 
@@ -88,6 +94,10 @@ function buildGenerationOptions(body: VaultGenerateRequest): VaultGenerationOpti
     reusePasswords: false,
     passwordReusePercentage: 10,
     language: 'en',
+    useTags: false,
+    tagCount: 10,
+    distributeItemsToTags: true,
+    taggedItemPercentage: 60,
   }
 
   // Override with provided values, applying format constraints
@@ -232,6 +242,21 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool
       )
       return convertPasswordDepotToCSV(passwordDepotItems)
+    
+    case '1password':
+      const onePasswordItems = createOnePasswordItem(
+        options.loginCount,
+        options.useRealUrls,
+        options.useWeakPasswords,
+        options.weakPasswordPercentage,
+        options.reusePasswords,
+        options.passwordReusePercentage,
+        passwordPool,
+        options.useTags,
+        options.tagCount,
+        options.taggedItemPercentage
+      )
+      return formatOnePasswordToCsv(onePasswordItems)
     
     default:
       throw new Error(`Unsupported format: ${options.vaultFormat}`)

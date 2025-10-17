@@ -21,6 +21,7 @@ export const ExportButtons: React.FC<ExportButtonsProps> = ({
       case "edge":
       case "keepassx":
       case "password-depot":
+      case "1password":
         return "CSV"
       case "keepass2":
         return "XML"

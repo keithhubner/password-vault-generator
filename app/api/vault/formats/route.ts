@@ -71,6 +71,14 @@ const formatDetails: Record<string, FormatInfo> = {
     supportedItemTypes: ['login'],
     organizationalFeatures: [],
     outputFormat: 'CSV'
+  },
+  '1password': {
+    name: '1Password',
+    description: '1Password export format with full feature support',
+    supportedVaultTypes: ['individual'],
+    supportedItemTypes: ['login'],
+    organizationalFeatures: ['tags', 'favorites', 'archived items', 'notes', 'TOTP'],
+    outputFormat: 'CSV'
   }
 }
 
