@@ -77,6 +77,7 @@ jobs:
           kubectl apply -f k8s/configmap.yaml
           kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/ingress.yaml
           
           # Wait for deployment to complete
           kubectl rollout restart deployment/password-vault-generator -n password-vault-generator
@@ -85,12 +86,17 @@ jobs:
           # Verify deployment
           kubectl get pods -n password-vault-generator
           kubectl get configmap nextjs-config -n password-vault-generator
-          
+
+          # Verify ingress
+          echo "Checking ingress configuration..."
+          kubectl get ingress -n password-vault-generator
+          kubectl describe ingress password-vault-generator -n password-vault-generator
+
           # Verify Civo branding is enabled
           echo "Checking Civo branding configuration..."
           HOSTED_ON=$(kubectl get configmap nextjs-config -n password-vault-generator -o jsonpath='{.data.NEXT_PUBLIC_HOSTED_ON}')
           echo "NEXT_PUBLIC_HOSTED_ON is set to: '$HOSTED_ON'"
-          
+
           if [ "$HOSTED_ON" = "civo" ]; then
             echo "✅ Civo branding is properly configured and will be displayed"
           else
