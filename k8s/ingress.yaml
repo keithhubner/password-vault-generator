@@ -1,0 +1,83 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: password-vault-generator
+  namespace: password-vault-generator
+  annotations:
+    # Traefik ingress controller
+    kubernetes.io/ingress.class: traefik
+    # Cert-manager annotations for automatic TLS certificate generation
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Traefik-specific annotations
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: password-vault-generator-redirect-https@kubernetescrd
+spec:
+  tls:
+  - hosts:
+    - www.passwordvaultgenerator.com
+    - passwordvaultgenerator.com
+    secretName: password-vault-generator-tls
+  rules:
+  - host: www.passwordvaultgenerator.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: password-vault-generator
+            port:
+              number: 80
+  - host: passwordvaultgenerator.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: password-vault-generator
+            port:
+              number: 80
+---
+# Redirect non-www to www
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-to-www
+  namespace: password-vault-generator
+spec:
+  redirectRegex:
+    regex: "^https://passwordvaultgenerator\\.com/(.*)"
+    replacement: "https://www.passwordvaultgenerator.com/${1}"
+    permanent: true
+---
+# Redirect HTTP to HTTPS
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-https
+  namespace: password-vault-generator
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+# IngressRoute for non-www to www redirect (Traefik CRD)
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: password-vault-generator-redirect
+  namespace: password-vault-generator
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`passwordvaultgenerator.com`)
+    kind: Rule
+    middlewares:
+    - name: redirect-to-www
+    services:
+    - name: password-vault-generator
+      port: 80
+  tls:
+    secretName: password-vault-generator-tls
