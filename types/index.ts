@@ -17,6 +17,7 @@ export interface VaultGenerationOptions {
   vaultType: VaultType
   vaultFormat: VaultFormat
   useRealUrls: boolean
+  useEnterpriseUrls: boolean
   useCollections: boolean
   collectionCount: number
   distributeItems: boolean

@@ -488,12 +488,32 @@ const popularWebsites = [
   "twitch.tv",
 ]
 
+const enterpriseWebsites = [
+  "salesforce.com", "dynamics.microsoft.com", "hubspot.com", "zoho.com",
+  "splunk.com", "qradar.cloud.ibm.com", "sentinel.microsoft.com", "elastic.co",
+  "sumologic.com", "datadog.com", "newrelic.com", "paloaltonetworks.com",
+  "crowdstrike.com", "okta.com", "onelogin.com", "duo.com",
+  "slack.com", "teams.microsoft.com", "zoom.us", "webex.com",
+  "workday.com", "oracle.com", "sap.com",
+  "aws.amazon.com", "console.cloud.google.com", "portal.azure.com", "cloud.ibm.com",
+  "jenkins.io", "gitlab.com", "bitbucket.org", "circleci.com",
+  "jira.atlassian.com", "confluence.atlassian.com", "monday.com", "asana.com",
+  "servicenow.com", "smartsheet.com",
+  "tableau.com", "powerbi.microsoft.com", "looker.com", "qlik.com",
+  "adp.com", "greenhouse.io", "lever.co", "bamboohr.com",
+  "netsuite.com", "concur.com", "expensify.com", "coupa.com",
+  "box.com", "sharepoint.com", "documentum.com",
+  "marketo.com", "eloqua.com", "pardot.com", "mailchimp.com",
+  "pagerduty.com", "statuspage.io", "freshservice.com", "zendesk.com",
+]
+
 // Helper function to create Bitwarden items
 const createBitwardenItem = (
   objType: string,
   count: number,
   vaultType: "individual" | "org",
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   collections: { id: string; name: string }[],
   distributeItems: boolean,
   weakPasswordPercentage: number,
@@ -531,9 +551,13 @@ const createBitwardenItem = (
 
     switch (objType) {
       case "objType1":
-        const website = useRealUrls
-          ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
-          : faker.internet.domainName()
+        let website: string
+        if (useRealUrls) {
+          const sites = useEnterpriseUrls ? enterpriseWebsites : popularWebsites
+          website = sites[Math.floor(Math.random() * sites.length)]
+        } else {
+          website = faker.internet.domainName()
+        }
 
         // Determine password strategy
         let password: string
@@ -647,15 +671,20 @@ const createBitwardenItem = (
 const createLastPassItem = (
   number: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   weakPasswordPercentage: number,
   passwordReusePercentage: number,
   passwordPool: string[],
 ): LastPassItem[] => {
   const items: LastPassItem[] = []
   for (let i = 0; i < number; i++) {
-    const website = useRealUrls
-      ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
-      : faker.internet.domainName()
+    let website: string
+    if (useRealUrls) {
+      const sites = useEnterpriseUrls ? enterpriseWebsites : popularWebsites
+      website = sites[Math.floor(Math.random() * sites.length)]
+    } else {
+      website = faker.internet.domainName()
+    }
 
     // Determine password strategy
     let password: string
@@ -696,15 +725,20 @@ const createLastPassItem = (
 const createEdgePasswordItem = (
   number: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   weakPasswordPercentage: number,
   passwordReusePercentage: number,
   passwordPool: string[],
 ): EdgePasswordItem[] => {
   const items: EdgePasswordItem[] = []
   for (let i = 0; i < number; i++) {
-    const website = useRealUrls
-      ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
-      : faker.internet.domainName()
+    let website: string
+    if (useRealUrls) {
+      const sites = useEnterpriseUrls ? enterpriseWebsites : popularWebsites
+      website = sites[Math.floor(Math.random() * sites.length)]
+    } else {
+      website = faker.internet.domainName()
+    }
 
     // Determine password strategy
     let password: string
@@ -743,15 +777,20 @@ const createEdgePasswordItem = (
 const createKeePassXItem = (
   number: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   weakPasswordPercentage: number,
   passwordReusePercentage: number,
   passwordPool: string[],
 ): KeePassXItem[] => {
   const items: KeePassXItem[] = []
   for (let i = 0; i < number; i++) {
-    const website = useRealUrls
-      ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
-      : faker.internet.domainName()
+    let website: string
+    if (useRealUrls) {
+      const sites = useEnterpriseUrls ? enterpriseWebsites : popularWebsites
+      website = sites[Math.floor(Math.random() * sites.length)]
+    } else {
+      website = faker.internet.domainName()
+    }
 
     // Determine password strategy
     let password: string
@@ -829,13 +868,18 @@ const generateKeePass2Times = (): KeePass2Times => {
 // Helper function to create KeePass2 entries
 const createKeePass2Entry = (
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   weakPasswordPercentage: number,
   passwordReusePercentage: number,
   passwordPool: string[],
 ): KeePass2Entry => {
-  const website = useRealUrls
-    ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
-    : faker.internet.domainName()
+  let website: string
+  if (useRealUrls) {
+    const sites = useEnterpriseUrls ? enterpriseWebsites : popularWebsites
+    website = sites[Math.floor(Math.random() * sites.length)]
+  } else {
+    website = faker.internet.domainName()
+  }
 
   // Determine password strategy
   let password: string
@@ -894,6 +938,7 @@ const createKeePass2Entry = (
 const createKeePass2Groups = (
   loginCount: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   weakPasswordPercentage: number,
   passwordReusePercentage: number,
   passwordPool: string[],
@@ -950,7 +995,7 @@ const createKeePass2Groups = (
   const rootEntries = Math.min(remainingEntries, Math.max(8, Math.floor(loginCount * 0.3)))
   for (let i = 0; i < rootEntries; i++) {
     mainGroup.Entries.push(
-      createKeePass2Entry(useRealUrls, weakPasswordPercentage, passwordReusePercentage, passwordPool),
+      createKeePass2Entry(useRealUrls, useEnterpriseUrls, weakPasswordPercentage, passwordReusePercentage, passwordPool),
     )
   }
   remainingEntries -= rootEntries
@@ -961,7 +1006,7 @@ const createKeePass2Groups = (
     const groupEntries = Math.min(remainingEntries, entriesPerGroup)
     for (let i = 0; i < groupEntries; i++) {
       group.Entries.push(
-        createKeePass2Entry(useRealUrls, weakPasswordPercentage, passwordReusePercentage, passwordPool),
+        createKeePass2Entry(useRealUrls, useEnterpriseUrls, weakPasswordPercentage, passwordReusePercentage, passwordPool),
       )
     }
     remainingEntries -= groupEntries
@@ -971,7 +1016,7 @@ const createKeePass2Groups = (
   while (remainingEntries > 0) {
     const targetGroup = faker.helpers.arrayElement([...mainGroup.Groups])
     targetGroup.Entries.push(
-      createKeePass2Entry(useRealUrls, weakPasswordPercentage, passwordReusePercentage, passwordPool),
+      createKeePass2Entry(useRealUrls, useEnterpriseUrls, weakPasswordPercentage, passwordReusePercentage, passwordPool),
     )
     remainingEntries--
   }
@@ -983,6 +1028,7 @@ const createKeePass2Groups = (
 const createKeePass2File = (
   loginCount: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   weakPasswordPercentage: number,
   passwordReusePercentage: number,
   passwordPool: string[],
@@ -1025,6 +1071,7 @@ const createKeePass2File = (
       Group: createKeePass2Groups(
         loginCount,
         useRealUrls,
+        useEnterpriseUrls,
         weakPasswordPercentage,
         passwordReusePercentage,
         passwordPool,
@@ -1213,6 +1260,7 @@ const flattenSharedFolderStructure = (
 const createKeeperItem = (
   number: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   useNestedFolders: boolean,
   weakPasswordPercentage: number,
   passwordReusePercentage: number,
@@ -1231,9 +1279,13 @@ const createKeeperItem = (
 
   const items: KeeperRecord[] = []
   for (let i = 0; i < number; i++) {
-    const website = useRealUrls
-      ? popularWebsites[Math.floor(Math.random() * popularWebsites.length)]
-      : faker.internet.domainName()
+    let website: string
+    if (useRealUrls) {
+      const sites = useEnterpriseUrls ? enterpriseWebsites : popularWebsites
+      website = sites[Math.floor(Math.random() * sites.length)]
+    } else {
+      website = faker.internet.domainName()
+    }
 
     // Determine password strategy
     let password: string
@@ -1481,6 +1533,7 @@ export default function Component() {
   const [vaultType, setVaultType] = useState<"individual" | "org">("individual")
   const [vaultFormat, setVaultFormat] = useState("bitwarden")
   const [useRealUrls, setUseRealUrls] = useState(false)
+  const [useEnterpriseUrls, setUseEnterpriseUrls] = useState(false)
   const [useCollections, setUseCollections] = useState(false)
   const [collectionCount, setCollectionCount] = useState(10)
   const [distributeItems, setDistributeItems] = useState(false)
@@ -1528,6 +1581,7 @@ export default function Component() {
             loginCount,
             vaultType,
             useRealUrls,
+            useEnterpriseUrls,
             [],
             false,
             useWeakPasswords ? weakPasswordPercentage : 0,
@@ -1539,6 +1593,7 @@ export default function Component() {
             secureNoteCount,
             vaultType,
             useRealUrls,
+            useEnterpriseUrls,
             [],
             false,
             useWeakPasswords ? weakPasswordPercentage : 0,
@@ -1550,6 +1605,7 @@ export default function Component() {
             creditCardCount,
             vaultType,
             useRealUrls,
+            useEnterpriseUrls,
             [],
             false,
             useWeakPasswords ? weakPasswordPercentage : 0,
@@ -1561,6 +1617,7 @@ export default function Component() {
             identityCount,
             vaultType,
             useRealUrls,
+            useEnterpriseUrls,
             [],
             false,
             useWeakPasswords ? weakPasswordPercentage : 0,
@@ -1617,6 +1674,7 @@ export default function Component() {
             loginCount,
             vaultType,
             useRealUrls,
+            useEnterpriseUrls,
             orgVault.collections,
             distributeItems,
             useWeakPasswords ? weakPasswordPercentage : 0,
@@ -1628,6 +1686,7 @@ export default function Component() {
             secureNoteCount,
             vaultType,
             useRealUrls,
+            useEnterpriseUrls,
             orgVault.collections,
             distributeItems,
             useWeakPasswords ? weakPasswordPercentage : 0,
@@ -1639,6 +1698,7 @@ export default function Component() {
             creditCardCount,
             vaultType,
             useRealUrls,
+            useEnterpriseUrls,
             orgVault.collections,
             distributeItems,
             useWeakPasswords ? weakPasswordPercentage : 0,
@@ -1650,6 +1710,7 @@ export default function Component() {
             identityCount,
             vaultType,
             useRealUrls,
+            useEnterpriseUrls,
             orgVault.collections,
             distributeItems,
             useWeakPasswords ? weakPasswordPercentage : 0,
@@ -1663,6 +1724,7 @@ export default function Component() {
       const items = createLastPassItem(
         loginCount,
         useRealUrls,
+        useEnterpriseUrls,
         useWeakPasswords ? weakPasswordPercentage : 0,
         reusePasswords ? passwordReusePercentage : 0,
         passwordPool,
@@ -1672,6 +1734,7 @@ export default function Component() {
       const items = createEdgePasswordItem(
         loginCount,
         useRealUrls,
+        useEnterpriseUrls,
         useWeakPasswords ? weakPasswordPercentage : 0,
         reusePasswords ? passwordReusePercentage : 0,
         passwordPool,
@@ -1681,6 +1744,7 @@ export default function Component() {
       const items = createKeePassXItem(
         loginCount,
         useRealUrls,
+        useEnterpriseUrls,
         useWeakPasswords ? weakPasswordPercentage : 0,
         reusePasswords ? passwordReusePercentage : 0,
         passwordPool,
@@ -1697,6 +1761,7 @@ export default function Component() {
         records: createKeeperItem(
           loginCount,
           useRealUrls,
+          useEnterpriseUrls,
           useNestedFolders,
           useWeakPasswords ? weakPasswordPercentage : 0,
           reusePasswords ? passwordReusePercentage : 0,
@@ -1715,6 +1780,7 @@ export default function Component() {
       const keepassFile = createKeePass2File(
         loginCount,
         useRealUrls,
+        useEnterpriseUrls,
         useWeakPasswords ? weakPasswordPercentage : 0,
         reusePasswords ? passwordReusePercentage : 0,
         passwordPool,
@@ -1727,6 +1793,7 @@ export default function Component() {
       const items = createPasswordDepotItems(
         loginCount,
         useRealUrls,
+        useEnterpriseUrls,
         useWeakPasswords,
         weakPasswordPercentage,
         reusePasswords,

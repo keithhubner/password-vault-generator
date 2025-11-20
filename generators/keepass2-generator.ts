@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { KeePass2File, KeePass2Times, KeePass2Entry, KeePass2Group, KeePass2String } from "../types"
 import { generatePassword } from "../utils/password-generators"
-import { popularWebsites } from "../utils/constants"
+import { popularWebsites, enterpriseWebsites } from "../utils/constants"
 
 const generateKeePass2UUID = (): string => {
   const bytes = new Uint8Array(16)
@@ -35,15 +35,21 @@ const generateKeePass2Times = (): KeePass2Times => {
 
 const createKeePass2Entry = (
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   useWeakPasswords: boolean,
   weakPasswordPercentage: number,
   reusePasswords: boolean,
   passwordReusePercentage: number,
   passwordPool: string[]
 ): KeePass2Entry => {
-  const website = useRealUrls
-    ? faker.helpers.arrayElement(popularWebsites)
-    : faker.internet.domainName()
+  let website: string
+  if (useRealUrls) {
+    website = useEnterpriseUrls
+      ? faker.helpers.arrayElement(enterpriseWebsites)
+      : faker.helpers.arrayElement(popularWebsites)
+  } else {
+    website = faker.internet.domainName()
+  }
 
   const password = generatePassword(
     useWeakPasswords,
@@ -86,6 +92,7 @@ const createKeePass2Entry = (
 const createKeePass2Groups = (
   loginCount: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   useWeakPasswords: boolean,
   weakPasswordPercentage: number,
   reusePasswords: boolean,
@@ -133,10 +140,10 @@ const createKeePass2Groups = (
 
   let remainingEntries = loginCount
   const rootEntries = Math.min(remainingEntries, Math.max(8, Math.floor(loginCount * 0.3)))
-  
+
   for (let i = 0; i < rootEntries; i++) {
     mainGroup.Entries.push(
-      createKeePass2Entry(useRealUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool)
+      createKeePass2Entry(useRealUrls, useEnterpriseUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool)
     )
   }
   remainingEntries -= rootEntries
@@ -146,7 +153,7 @@ const createKeePass2Groups = (
     const groupEntries = Math.min(remainingEntries, entriesPerGroup)
     for (let i = 0; i < groupEntries; i++) {
       group.Entries.push(
-        createKeePass2Entry(useRealUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool)
+        createKeePass2Entry(useRealUrls, useEnterpriseUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool)
       )
     }
     remainingEntries -= groupEntries
@@ -155,7 +162,7 @@ const createKeePass2Groups = (
   while (remainingEntries > 0) {
     const targetGroup = faker.helpers.arrayElement([...mainGroup.Groups])
     targetGroup.Entries.push(
-      createKeePass2Entry(useRealUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool)
+      createKeePass2Entry(useRealUrls, useEnterpriseUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool)
     )
     remainingEntries--
   }
@@ -166,6 +173,7 @@ const createKeePass2Groups = (
 export const createKeePass2File = (
   loginCount: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   useWeakPasswords: boolean,
   weakPasswordPercentage: number,
   reusePasswords: boolean,
@@ -210,6 +218,7 @@ export const createKeePass2File = (
       Group: createKeePass2Groups(
         loginCount,
         useRealUrls,
+        useEnterpriseUrls,
         useWeakPasswords,
         weakPasswordPercentage,
         reusePasswords,

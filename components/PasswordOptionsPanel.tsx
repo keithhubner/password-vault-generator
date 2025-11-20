@@ -15,6 +15,8 @@ interface PasswordOptionsPanelProps {
   onPasswordReusePercentageChange: (value: number) => void
   useRealUrls: boolean
   onUseRealUrlsChange: (value: boolean) => void
+  useEnterpriseUrls: boolean
+  onUseEnterpriseUrlsChange: (value: boolean) => void
 }
 
 export const PasswordOptionsPanel: React.FC<PasswordOptionsPanelProps> = ({
@@ -28,6 +30,8 @@ export const PasswordOptionsPanel: React.FC<PasswordOptionsPanelProps> = ({
   onPasswordReusePercentageChange,
   useRealUrls,
   onUseRealUrlsChange,
+  useEnterpriseUrls,
+  onUseEnterpriseUrlsChange,
 }) => {
   return (
     <div className="space-y-4">
@@ -95,13 +99,26 @@ export const PasswordOptionsPanel: React.FC<PasswordOptionsPanelProps> = ({
         )}
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="useRealUrls"
-          checked={useRealUrls}
-          onCheckedChange={(checked) => onUseRealUrlsChange(checked as boolean)}
-        />
-        <Label htmlFor="useRealUrls">Use real website URLs for logins</Label>
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="useRealUrls"
+            checked={useRealUrls}
+            onCheckedChange={(checked) => onUseRealUrlsChange(checked as boolean)}
+          />
+          <Label htmlFor="useRealUrls">Use real website URLs for logins</Label>
+        </div>
+
+        {useRealUrls && (
+          <div className="ml-6 flex items-center space-x-2">
+            <Checkbox
+              id="useEnterpriseUrls"
+              checked={useEnterpriseUrls}
+              onCheckedChange={(checked) => onUseEnterpriseUrlsChange(checked as boolean)}
+            />
+            <Label htmlFor="useEnterpriseUrls">Use enterprise URLs only (SIEM, Salesforce, Okta, etc.)</Label>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -1,24 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { PasswordDepotItem } from "../types/password-depot"
 import { generatePassword } from "../utils/password-generators"
-
-const popularWebsites = [
-  "google.com",
-  "facebook.com",
-  "amazon.com",
-  "twitter.com",
-  "instagram.com",
-  "linkedin.com",
-  "netflix.com",
-  "microsoft.com",
-  "apple.com",
-  "github.com",
-  "youtube.com",
-  "reddit.com",
-  "wikipedia.org",
-  "yahoo.com",
-  "twitch.tv",
-]
+import { popularWebsites, enterpriseWebsites } from "../utils/constants"
 
 const passwordDepotCategories = [
   "Internet",
@@ -48,6 +31,7 @@ const importanceLevels = [
 export const createPasswordDepotItems = (
   count: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   useWeakPasswords: boolean,
   weakPasswordPercentage: number,
   reusePasswords: boolean,
@@ -57,9 +41,14 @@ export const createPasswordDepotItems = (
   const items: PasswordDepotItem[] = []
 
   for (let i = 0; i < count; i++) {
-    const website = useRealUrls
-      ? faker.helpers.arrayElement(popularWebsites)
-      : faker.internet.domainName()
+    let website: string
+    if (useRealUrls) {
+      website = useEnterpriseUrls
+        ? faker.helpers.arrayElement(enterpriseWebsites)
+        : faker.helpers.arrayElement(popularWebsites)
+    } else {
+      website = faker.internet.domainName()
+    }
 
     const password = generatePassword(
       useWeakPasswords,
