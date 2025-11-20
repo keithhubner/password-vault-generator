@@ -74,6 +74,7 @@ function buildGenerationOptions(body: VaultGenerateRequest): VaultGenerationOpti
     vaultType: 'individual',
     vaultFormat: body.format,
     useRealUrls: false,
+    useEnterpriseUrls: false,
     useCollections: false,
     collectionCount: 5,
     distributeItems: true,
@@ -149,6 +150,7 @@ async function generateVault(options: VaultGenerationOptions) {
         options.identityCount,
         options.vaultType,
         options.useRealUrls,
+        options.useEnterpriseUrls,
         collections,
         options.distributeItems,
         options.useWeakPasswords,
@@ -158,11 +160,12 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool,
         options.language
       )
-    
+
     case 'lastpass':
       const lastPassItems = createLastPassItem(
         options.loginCount,
         options.useRealUrls,
+        options.useEnterpriseUrls,
         options.useWeakPasswords,
         options.weakPasswordPercentage,
         options.reusePasswords,
@@ -170,11 +173,12 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool
       )
       return formatLastPassToCsv(lastPassItems)
-    
+
     case 'keeper':
       const keeperVault = generateKeeperVault(
         options.loginCount,
         options.useRealUrls,
+        options.useEnterpriseUrls,
         false, // useNestedFolders - not supported in keeper
         false, // useRandomDepthNesting - not supported in keeper
         options.useWeakPasswords,
@@ -184,11 +188,12 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool
       )
       return formatKeeperToCsv(keeperVault)
-    
+
     case 'edge':
       const edgeItems = createEdgePasswordItem(
         options.loginCount,
         options.useRealUrls,
+        options.useEnterpriseUrls,
         options.useWeakPasswords,
         options.weakPasswordPercentage,
         options.reusePasswords,
@@ -196,11 +201,12 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool
       )
       return formatEdgeToCsv(edgeItems)
-    
+
     case 'keepassx':
       const keepassxItems = createKeePassXItem(
         options.loginCount,
         options.useRealUrls,
+        options.useEnterpriseUrls,
         options.useWeakPasswords,
         options.weakPasswordPercentage,
         options.reusePasswords,
@@ -208,11 +214,12 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool
       )
       return formatKeePassXToCsv(keepassxItems)
-    
+
     case 'keepass2':
       const keepass2File = createKeePass2File(
         options.loginCount,
         options.useRealUrls,
+        options.useEnterpriseUrls,
         options.useWeakPasswords,
         options.weakPasswordPercentage,
         options.reusePasswords,
@@ -220,11 +227,12 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool
       )
       return convertKeePass2ToXML(keepass2File)
-    
+
     case 'password-depot':
       const passwordDepotItems = createPasswordDepotItems(
         options.loginCount,
         options.useRealUrls,
+        options.useEnterpriseUrls,
         options.useWeakPasswords,
         options.weakPasswordPercentage,
         options.reusePasswords,

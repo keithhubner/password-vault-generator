@@ -61,6 +61,7 @@ export default function PasswordVaultGeneratorImproved() {
     return language
   }, [language])
   const [useRealUrls, setUseRealUrls] = useState(false)
+  const [useEnterpriseUrls, setUseEnterpriseUrls] = useState(false)
   const [useCollections, setUseCollections] = useState(false)
   const [collectionCount, setCollectionCount] = useState(10)
   const [distributeItems, setDistributeItems] = useState(false)
@@ -162,7 +163,7 @@ export default function PasswordVaultGeneratorImproved() {
           if (vaultType === "individual") {
             vaultData = generateBitwardenVault(
               loginCount, secureNoteCount, creditCardCount, identityCount,
-              vaultType, useRealUrls, [], false,
+              vaultType, useRealUrls, useEnterpriseUrls, [], false,
               useWeakPasswords, weakPasswordPercentage,
               reusePasswords, passwordReusePercentage, passwordPool, currentLang
             )
@@ -200,7 +201,7 @@ export default function PasswordVaultGeneratorImproved() {
 
             vaultData = generateBitwardenVault(
               loginCount, secureNoteCount, creditCardCount, identityCount,
-              vaultType, useRealUrls, collections, distributeItems,
+              vaultType, useRealUrls, useEnterpriseUrls, collections, distributeItems,
               useWeakPasswords, weakPasswordPercentage,
               reusePasswords, passwordReusePercentage, passwordPool, currentLang
             )
@@ -210,7 +211,7 @@ export default function PasswordVaultGeneratorImproved() {
 
         case "lastpass":
           vaultData = createLastPassItem(
-            loginCount, useRealUrls,
+            loginCount, useRealUrls, useEnterpriseUrls,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
@@ -219,7 +220,7 @@ export default function PasswordVaultGeneratorImproved() {
 
         case "edge":
           vaultData = createEdgePasswordItem(
-            loginCount, useRealUrls,
+            loginCount, useRealUrls, useEnterpriseUrls,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
@@ -228,7 +229,7 @@ export default function PasswordVaultGeneratorImproved() {
 
         case "keepassx":
           vaultData = createKeePassXItem(
-            loginCount, useRealUrls,
+            loginCount, useRealUrls, useEnterpriseUrls,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
@@ -237,7 +238,7 @@ export default function PasswordVaultGeneratorImproved() {
 
         case "keepass2":
           const keepassFile = createKeePass2File(
-            loginCount, useRealUrls,
+            loginCount, useRealUrls, useEnterpriseUrls,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
@@ -246,7 +247,7 @@ export default function PasswordVaultGeneratorImproved() {
 
         case "keeper":
           vaultData = generateKeeperVault(
-            loginCount, useRealUrls, useNestedFolders, useRandomDepthNesting,
+            loginCount, useRealUrls, useEnterpriseUrls, useNestedFolders, useRandomDepthNesting,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
@@ -257,6 +258,7 @@ export default function PasswordVaultGeneratorImproved() {
           vaultData = createPasswordDepotItems(
             loginCount,
             useRealUrls,
+            useEnterpriseUrls,
             useWeakPasswords,
             weakPasswordPercentage,
             reusePasswords,
@@ -291,7 +293,7 @@ export default function PasswordVaultGeneratorImproved() {
     }
   }, [
     loginCount, secureNoteCount, creditCardCount, identityCount,
-    vaultType, vaultFormat, useRealUrls, useCollections, collectionCount,
+    vaultType, vaultFormat, useRealUrls, useEnterpriseUrls, useCollections, collectionCount,
     distributeItems, useNestedFolders, useRandomDepthNesting,
     useNestedCollections, topLevelCollectionCount, collectionNestingDepth,
     totalCollectionCount, useWeakPasswords, weakPasswordPercentage,
@@ -431,6 +433,8 @@ export default function PasswordVaultGeneratorImproved() {
             onPasswordReusePercentageChange={setPasswordReusePercentage}
             useRealUrls={useRealUrls}
             onUseRealUrlsChange={setUseRealUrls}
+            useEnterpriseUrls={useEnterpriseUrls}
+            onUseEnterpriseUrlsChange={setUseEnterpriseUrls}
           />
 
           <CollectionSettings

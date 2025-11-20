@@ -1,11 +1,12 @@
 import { faker } from "@faker-js/faker"
 import { KeePassXItem } from "../types"
 import { generatePassword } from "../utils/password-generators"
-import { popularWebsites } from "../utils/constants"
+import { popularWebsites, enterpriseWebsites } from "../utils/constants"
 
 export const createKeePassXItem = (
   number: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   useWeakPasswords: boolean,
   weakPasswordPercentage: number,
   reusePasswords: boolean,
@@ -13,11 +14,16 @@ export const createKeePassXItem = (
   passwordPool: string[]
 ): KeePassXItem[] => {
   const items: KeePassXItem[] = []
-  
+
   for (let i = 0; i < number; i++) {
-    const website = useRealUrls
-      ? faker.helpers.arrayElement(popularWebsites)
-      : faker.internet.domainName()
+    let website: string
+    if (useRealUrls) {
+      website = useEnterpriseUrls
+        ? faker.helpers.arrayElement(enterpriseWebsites)
+        : faker.helpers.arrayElement(popularWebsites)
+    } else {
+      website = faker.internet.domainName()
+    }
 
     const password = generatePassword(
       useWeakPasswords,

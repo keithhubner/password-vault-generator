@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { KeeperVault, KeeperRecord, KeeperFolderReference } from "../types"
 import { generatePassword, generateTOTPSecret } from "../utils/password-generators"
-import { popularWebsites } from "../utils/constants"
+import { popularWebsites, enterpriseWebsites } from "../utils/constants"
 import { 
   generateFolderStructure, 
   generateSharedFolderStructure, 
@@ -12,6 +12,7 @@ import {
 export const createKeeperItem = (
   number: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   useNestedFolders: boolean,
   useWeakPasswords: boolean,
   weakPasswordPercentage: number,
@@ -28,11 +29,16 @@ export const createKeeperItem = (
   const simpleFolders = ["Private Folder", "My Websites", "Social Media"]
 
   const items: KeeperRecord[] = []
-  
+
   for (let i = 0; i < number; i++) {
-    const website = useRealUrls
-      ? faker.helpers.arrayElement(popularWebsites)
-      : faker.internet.domainName()
+    let website: string
+    if (useRealUrls) {
+      website = useEnterpriseUrls
+        ? faker.helpers.arrayElement(enterpriseWebsites)
+        : faker.helpers.arrayElement(popularWebsites)
+    } else {
+      website = faker.internet.domainName()
+    }
 
     const password = generatePassword(
       useWeakPasswords,
@@ -110,6 +116,7 @@ export const createKeeperItem = (
 export const generateKeeperVault = (
   loginCount: number,
   useRealUrls: boolean,
+  useEnterpriseUrls: boolean,
   useNestedFolders: boolean,
   useRandomDepthNesting: boolean,
   useWeakPasswords: boolean,
@@ -127,6 +134,7 @@ export const generateKeeperVault = (
     records: createKeeperItem(
       loginCount,
       useRealUrls,
+      useEnterpriseUrls,
       useNestedFolders,
       useWeakPasswords,
       weakPasswordPercentage,

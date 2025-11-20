@@ -50,6 +50,98 @@ export const popularWebsites = [
   "twitch.tv",
 ]
 
+export const enterpriseWebsites = [
+  // CRM & Sales
+  "salesforce.com",
+  "dynamics.microsoft.com",
+  "hubspot.com",
+  "zoho.com",
+
+  // Security & SIEM
+  "splunk.com",
+  "qradar.cloud.ibm.com",
+  "sentinel.microsoft.com",
+  "elastic.co",
+  "sumologic.com",
+  "datadog.com",
+  "newrelic.com",
+  "paloaltonetworks.com",
+  "crowdstrike.com",
+  "okta.com",
+  "onelogin.com",
+  "duo.com",
+
+  // Enterprise Collaboration
+  "slack.com",
+  "teams.microsoft.com",
+  "zoom.us",
+  "webex.com",
+  "workday.com",
+  "oracle.com",
+  "sap.com",
+
+  // Cloud Infrastructure
+  "aws.amazon.com",
+  "console.cloud.google.com",
+  "portal.azure.com",
+  "cloud.ibm.com",
+
+  // DevOps & CI/CD
+  "jenkins.io",
+  "gitlab.com",
+  "bitbucket.org",
+  "circleci.com",
+  "travis-ci.com",
+  "jfrog.com",
+  "sonarqube.org",
+
+  // Project Management
+  "jira.atlassian.com",
+  "confluence.atlassian.com",
+  "monday.com",
+  "asana.com",
+  "servicenow.com",
+  "smartsheet.com",
+
+  // Analytics & BI
+  "tableau.com",
+  "powerbi.microsoft.com",
+  "looker.com",
+  "qlik.com",
+  "thoughtspot.com",
+
+  // HR & Talent Management
+  "adp.com",
+  "greenhouse.io",
+  "lever.co",
+  "bamboohr.com",
+  "ultipro.com",
+
+  // Finance & ERP
+  "netsuite.com",
+  "concur.com",
+  "expensify.com",
+  "coupa.com",
+
+  // Document Management
+  "box.com",
+  "dropbox.com",
+  "sharepoint.com",
+  "documentum.com",
+
+  // Marketing Automation
+  "marketo.com",
+  "eloqua.com",
+  "pardot.com",
+  "mailchimp.com",
+
+  // IT Service Management
+  "pagerduty.com",
+  "statuspage.io",
+  "freshservice.com",
+  "zendesk.com",
+]
+
 export const businessDepartments = [
   "Executive",
   "Finance",
