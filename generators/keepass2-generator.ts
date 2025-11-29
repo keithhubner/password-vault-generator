@@ -40,13 +40,19 @@ const createKeePass2Entry = (
   weakPasswordPercentage: number,
   reusePasswords: boolean,
   passwordReusePercentage: number,
-  passwordPool: string[]
+  passwordPool: string[],
+  customEnterpriseUrls?: string[]
 ): KeePass2Entry => {
   let website: string
   if (useRealUrls) {
-    website = useEnterpriseUrls
-      ? faker.helpers.arrayElement(enterpriseWebsites)
-      : faker.helpers.arrayElement(popularWebsites)
+    if (useEnterpriseUrls) {
+      const urlList = customEnterpriseUrls && customEnterpriseUrls.length > 0
+        ? customEnterpriseUrls
+        : enterpriseWebsites
+      website = faker.helpers.arrayElement(urlList)
+    } else {
+      website = faker.helpers.arrayElement(popularWebsites)
+    }
   } else {
     website = faker.internet.domainName()
   }
@@ -97,7 +103,8 @@ const createKeePass2Groups = (
   weakPasswordPercentage: number,
   reusePasswords: boolean,
   passwordReusePercentage: number,
-  passwordPool: string[]
+  passwordPool: string[],
+  customEnterpriseUrls?: string[]
 ): KeePass2Group => {
   const mainGroup: KeePass2Group = {
     UUID: generateKeePass2UUID(),
@@ -143,7 +150,7 @@ const createKeePass2Groups = (
 
   for (let i = 0; i < rootEntries; i++) {
     mainGroup.Entries.push(
-      createKeePass2Entry(useRealUrls, useEnterpriseUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool)
+      createKeePass2Entry(useRealUrls, useEnterpriseUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, customEnterpriseUrls)
     )
   }
   remainingEntries -= rootEntries
@@ -153,7 +160,7 @@ const createKeePass2Groups = (
     const groupEntries = Math.min(remainingEntries, entriesPerGroup)
     for (let i = 0; i < groupEntries; i++) {
       group.Entries.push(
-        createKeePass2Entry(useRealUrls, useEnterpriseUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool)
+        createKeePass2Entry(useRealUrls, useEnterpriseUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, customEnterpriseUrls)
       )
     }
     remainingEntries -= groupEntries
@@ -162,7 +169,7 @@ const createKeePass2Groups = (
   while (remainingEntries > 0) {
     const targetGroup = faker.helpers.arrayElement([...mainGroup.Groups])
     targetGroup.Entries.push(
-      createKeePass2Entry(useRealUrls, useEnterpriseUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool)
+      createKeePass2Entry(useRealUrls, useEnterpriseUrls, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, customEnterpriseUrls)
     )
     remainingEntries--
   }
@@ -178,7 +185,8 @@ export const createKeePass2File = (
   weakPasswordPercentage: number,
   reusePasswords: boolean,
   passwordReusePercentage: number,
-  passwordPool: string[]
+  passwordPool: string[],
+  customEnterpriseUrls?: string[]
 ): KeePass2File => {
   const now = generateKeePass2Timestamp()
 
@@ -223,7 +231,8 @@ export const createKeePass2File = (
         weakPasswordPercentage,
         reusePasswords,
         passwordReusePercentage,
-        passwordPool
+        passwordPool,
+        customEnterpriseUrls
       ),
       DeletedObjects: { DeletedObject: [] },
     },

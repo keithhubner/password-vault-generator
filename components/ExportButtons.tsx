@@ -30,21 +30,36 @@ export const ExportButtons: React.FC<ExportButtonsProps> = ({
   }
 
   return (
-    <div className="space-x-4">
+    <div className="flex gap-2">
       {vaultFormat === "keeper" ? (
         <>
-          <Button onClick={() => onDownload("json")} disabled={disabled}>
-            <Download className="mr-2 h-4 w-4" />
+          <Button
+            variant="secondary"
+            onClick={() => onDownload("json")}
+            disabled={disabled}
+            className="flex-1"
+          >
+            <Download className="h-3.5 w-3.5" />
             Download JSON
           </Button>
-          <Button onClick={() => onDownload("csv")} disabled={disabled}>
-            <Download className="mr-2 h-4 w-4" />
+          <Button
+            variant="secondary"
+            onClick={() => onDownload("csv")}
+            disabled={disabled}
+            className="flex-1"
+          >
+            <Download className="h-3.5 w-3.5" />
             Download CSV
           </Button>
         </>
       ) : (
-        <Button onClick={() => onDownload()} disabled={disabled}>
-          <Download className="mr-2 h-4 w-4" />
+        <Button
+          variant="secondary"
+          onClick={() => onDownload()}
+          disabled={disabled}
+          className="w-full"
+        >
+          <Download className="h-3.5 w-3.5" />
           Download {getFileExtension()}
         </Button>
       )}

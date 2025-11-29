@@ -2,7 +2,17 @@
   "name": "password-vault-generator",
   "version": "0.1.0",
   "description": "A comprehensive Next.js application for generating test password vault data in multiple formats including Bitwarden, LastPass, Keeper, Microsoft Edge, KeePassX, and KeePass2",
-  "keywords": ["password", "vault", "generator", "bitwarden", "lastpass", "keeper", "security", "testing", "nextjs"],
+  "keywords": [
+    "password",
+    "vault",
+    "generator",
+    "bitwarden",
+    "lastpass",
+    "keeper",
+    "security",
+    "testing",
+    "nextjs"
+  ],
   "author": "Keith Hubner",
   "license": "MIT",
   "repository": {
@@ -22,19 +32,24 @@
   "dependencies": {
     "@faker-js/faker": "^9.2.0",
     "@radix-ui/react-checkbox": "^1.1.2",
+    "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-scroll-area": "^1.2.10",
     "@radix-ui/react-select": "^2.1.2",
-    "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-slider": "1.2.2",
+    "@radix-ui/react-slot": "^1.1.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "geist": "^1.5.1",
+    "is-fullwidth-code-point": "^3.0.0",
     "lucide-react": "^0.456.0",
     "next": "^15.2.3",
+    "next-themes": "^0.4.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.4",
-    "tailwindcss-animate": "^1.0.7",
-    "is-fullwidth-code-point": "^3.0.0"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -18,7 +18,8 @@ export const createKeeperItem = (
   weakPasswordPercentage: number,
   reusePasswords: boolean,
   passwordReusePercentage: number,
-  passwordPool: string[]
+  passwordPool: string[],
+  customEnterpriseUrls?: string[]
 ): KeeperRecord[] => {
   const folderStructure = useNestedFolders ? generateFolderStructure() : []
   const sharedFolderStructure = useNestedFolders ? generateSharedFolderStructure() : []
@@ -33,9 +34,14 @@ export const createKeeperItem = (
   for (let i = 0; i < number; i++) {
     let website: string
     if (useRealUrls) {
-      website = useEnterpriseUrls
-        ? faker.helpers.arrayElement(enterpriseWebsites)
-        : faker.helpers.arrayElement(popularWebsites)
+      if (useEnterpriseUrls) {
+        const urlList = customEnterpriseUrls && customEnterpriseUrls.length > 0
+          ? customEnterpriseUrls
+          : enterpriseWebsites
+        website = faker.helpers.arrayElement(urlList)
+      } else {
+        website = faker.helpers.arrayElement(popularWebsites)
+      }
     } else {
       website = faker.internet.domainName()
     }
@@ -123,7 +129,8 @@ export const generateKeeperVault = (
   weakPasswordPercentage: number,
   reusePasswords: boolean,
   passwordReusePercentage: number,
-  passwordPool: string[]
+  passwordPool: string[],
+  customEnterpriseUrls?: string[]
 ): KeeperVault => {
   const maxDepth = useNestedFolders ? (useRandomDepthNesting ? faker.number.int({ min: 4, max: 10 }) : 3) : 1
 
@@ -140,7 +147,8 @@ export const generateKeeperVault = (
       weakPasswordPercentage,
       reusePasswords,
       passwordReusePercentage,
-      passwordPool
+      passwordPool,
+      customEnterpriseUrls
     ),
   }
 

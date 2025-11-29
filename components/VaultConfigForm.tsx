@@ -41,9 +41,13 @@ export const VaultConfigForm: React.FC<VaultConfigFormProps> = ({
   const showAdditionalItems = !["lastpass", "edge", "keepassx", "keepass2", "password-depot"].includes(vaultFormat)
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="vaultFormat">Vault Format</Label>
+    <div className="rounded-md border border-border bg-card p-3 space-y-3">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Vault Configuration
+      </h3>
+
+      <div className="space-y-2">
+        <Label htmlFor="vaultFormat" className="text-xs">Vault Format</Label>
         <Select onValueChange={onVaultFormatChange} value={vaultFormat}>
           <SelectTrigger id="vaultFormat">
             <SelectValue placeholder="Select vault format" />
@@ -61,8 +65,8 @@ export const VaultConfigForm: React.FC<VaultConfigFormProps> = ({
       </div>
 
       {vaultFormat === "bitwarden" && (
-        <div>
-          <Label htmlFor="vaultType">Vault Type</Label>
+        <div className="space-y-2">
+          <Label htmlFor="vaultType" className="text-xs">Vault Type</Label>
           <Select onValueChange={onVaultTypeChange} value={vaultType}>
             <SelectTrigger id="vaultType">
               <SelectValue placeholder="Select vault type" />
@@ -75,8 +79,8 @@ export const VaultConfigForm: React.FC<VaultConfigFormProps> = ({
         </div>
       )}
 
-      <div>
-        <Label htmlFor="language">Language / Locale</Label>
+      <div className="space-y-2">
+        <Label htmlFor="language" className="text-xs">Language / Locale</Label>
         <Select onValueChange={onLanguageChange} value={language}>
           <SelectTrigger id="language">
             <SelectValue placeholder="Select language" />
@@ -110,84 +114,76 @@ export const VaultConfigForm: React.FC<VaultConfigFormProps> = ({
             <SelectItem value="zh_TW">Chinese Traditional (zh_TW)</SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-sm text-muted-foreground">
-          Select language for generating names, addresses, and text content with non-standard characters
+        <p className="text-2xs text-muted-foreground">
+          Select language for generating names, addresses, and text content
         </p>
       </div>
 
-      <div>
-        <Label htmlFor="loginCount">Number of Logins</Label>
-        <Input
-          id="loginCount"
-          type="number"
-          value={loginCount}
-          onChange={(e) => onLoginCountChange(Number.parseInt(e.target.value))}
-          min="0"
-          max="10000"
-          aria-describedby="loginCount-description"
-        />
-        <p id="loginCount-description" className="text-sm text-muted-foreground">
-          Enter the number of login items to generate (includes random TOTP keys)
-        </p>
+      <div className="pt-2 border-t border-border">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+          Item Counts
+        </h4>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label htmlFor="loginCount" className="text-xs">Logins</Label>
+            <Input
+              id="loginCount"
+              type="number"
+              value={loginCount}
+              onChange={(e) => onLoginCountChange(Number.parseInt(e.target.value))}
+              min="0"
+              max="10000"
+            />
+          </div>
+
+          {showAdditionalItems && (
+            <>
+              <div className="space-y-1">
+                <Label htmlFor="secureNoteCount" className="text-xs">Secure Notes</Label>
+                <Input
+                  id="secureNoteCount"
+                  type="number"
+                  value={secureNoteCount}
+                  onChange={(e) => onSecureNoteCountChange(Number.parseInt(e.target.value))}
+                  min="0"
+                  max="10000"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="creditCardCount" className="text-xs">Credit Cards</Label>
+                <Input
+                  id="creditCardCount"
+                  type="number"
+                  value={creditCardCount}
+                  onChange={(e) => onCreditCardCountChange(Number.parseInt(e.target.value))}
+                  min="0"
+                  max="10000"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="identityCount" className="text-xs">Identities</Label>
+                <Input
+                  id="identityCount"
+                  type="number"
+                  value={identityCount}
+                  onChange={(e) => onIdentityCountChange(Number.parseInt(e.target.value))}
+                  min="0"
+                  max="10000"
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {(vaultFormat === "keepass2" || vaultFormat === "password-depot") && (
+          <p className="text-2xs text-muted-foreground mt-2">
+            {vaultFormat === "keepass2" ? "KeePass2" : "Password Depot"} only supports login items.
+          </p>
+        )}
       </div>
-
-      {(vaultFormat === "keepass2" || vaultFormat === "password-depot") && (
-        <p className="text-sm text-muted-foreground">
-          {vaultFormat === "keepass2" ? "KeePass2" : "Password Depot"} only supports login items.
-        </p>
-      )}
-
-      {showAdditionalItems && (
-        <>
-          <div>
-            <Label htmlFor="secureNoteCount">Number of Secure Notes</Label>
-            <Input
-              id="secureNoteCount"
-              type="number"
-              value={secureNoteCount}
-              onChange={(e) => onSecureNoteCountChange(Number.parseInt(e.target.value))}
-              min="0"
-              max="10000"
-              aria-describedby="secureNoteCount-description"
-            />
-            <p id="secureNoteCount-description" className="text-sm text-muted-foreground">
-              Enter the number of secure note items to generate
-            </p>
-          </div>
-          
-          <div>
-            <Label htmlFor="creditCardCount">Number of Credit Cards</Label>
-            <Input
-              id="creditCardCount"
-              type="number"
-              value={creditCardCount}
-              onChange={(e) => onCreditCardCountChange(Number.parseInt(e.target.value))}
-              min="0"
-              max="10000"
-              aria-describedby="creditCardCount-description"
-            />
-            <p id="creditCardCount-description" className="text-sm text-muted-foreground">
-              Enter the number of credit card items to generate
-            </p>
-          </div>
-          
-          <div>
-            <Label htmlFor="identityCount">Number of Identities</Label>
-            <Input
-              id="identityCount"
-              type="number"
-              value={identityCount}
-              onChange={(e) => onIdentityCountChange(Number.parseInt(e.target.value))}
-              min="0"
-              max="10000"
-              aria-describedby="identityCount-description"
-            />
-            <p id="identityCount-description" className="text-sm text-muted-foreground">
-              Enter the number of identity items to generate
-            </p>
-          </div>
-        </>
-      )}
     </div>
   )
 }

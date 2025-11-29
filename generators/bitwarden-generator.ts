@@ -18,7 +18,8 @@ export const createBitwardenItem = (
   reusePasswords: boolean,
   passwordReusePercentage: number,
   passwordPool: string[],
-  locale: string = "en"
+  locale: string = "en",
+  customEnterpriseUrls?: string[]
 ): BitwardenVaultItem[] => {
   const items: BitwardenVaultItem[] = []
   const localeFaker = getFakerForLocale(locale)
@@ -52,9 +53,14 @@ export const createBitwardenItem = (
       case "objType1":
         let website: string
         if (useRealUrls) {
-          website = useEnterpriseUrls
-            ? localeFaker.helpers.arrayElement(enterpriseWebsites)
-            : localeFaker.helpers.arrayElement(popularWebsites)
+          if (useEnterpriseUrls) {
+            const urlList = customEnterpriseUrls && customEnterpriseUrls.length > 0
+              ? customEnterpriseUrls
+              : enterpriseWebsites
+            website = localeFaker.helpers.arrayElement(urlList)
+          } else {
+            website = localeFaker.helpers.arrayElement(popularWebsites)
+          }
         } else {
           website = localeFaker.internet.domainName()
         }
@@ -170,26 +176,27 @@ export const generateBitwardenVault = (
   reusePasswords: boolean,
   passwordReusePercentage: number,
   passwordPool: string[],
-  locale: string = "en"
+  locale: string = "en",
+  customEnterpriseUrls?: string[]
 ): BitwardenVault | BitwardenOrgVault => {
   const collectionRefs = collections.map(c => ({ id: c.id, name: c.name }))
 
   if (vaultType === "individual") {
     const vault: BitwardenVault = { folders: [], items: [] }
     vault.items = [
-      ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, false, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale),
-      ...createBitwardenItem("objType2", secureNoteCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, false, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale),
-      ...createBitwardenItem("objType3", creditCardCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, false, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale),
-      ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, false, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale),
+      ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, false, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale, customEnterpriseUrls),
+      ...createBitwardenItem("objType2", secureNoteCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, false, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale, customEnterpriseUrls),
+      ...createBitwardenItem("objType3", creditCardCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, false, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale, customEnterpriseUrls),
+      ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, false, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale, customEnterpriseUrls),
     ]
     return vault
   } else {
     const orgVault: BitwardenOrgVault = { collections, items: [] }
     orgVault.items = [
-      ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, distributeItems, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale),
-      ...createBitwardenItem("objType2", secureNoteCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, distributeItems, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale),
-      ...createBitwardenItem("objType3", creditCardCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, distributeItems, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale),
-      ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, distributeItems, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale),
+      ...createBitwardenItem("objType1", loginCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, distributeItems, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale, customEnterpriseUrls),
+      ...createBitwardenItem("objType2", secureNoteCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, distributeItems, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale, customEnterpriseUrls),
+      ...createBitwardenItem("objType3", creditCardCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, distributeItems, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale, customEnterpriseUrls),
+      ...createBitwardenItem("objType4", identityCount, vaultType, useRealUrls, useEnterpriseUrls, collectionRefs, distributeItems, useWeakPasswords, weakPasswordPercentage, reusePasswords, passwordReusePercentage, passwordPool, locale, customEnterpriseUrls),
     ]
     return orgVault
   }

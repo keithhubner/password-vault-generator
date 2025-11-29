@@ -48,77 +48,63 @@ export const Footer: React.FC<FooterProps> = ({ className = "" }) => {
     }
   }, [])
 
-  // No need for manual script loading - using Next.js Script component instead
-
   const civoImageSrc = imageError ? "/img/civo-logo.svg" : "/img/civo-powered-by-fullcolour.svg"
 
   return (
-    <footer className={`mt-12 py-8 border-t border-gray-200 ${className}`}>
-      <div className="container mx-auto px-4">
-        {/* Main footer content */}
-        <div className="flex flex-col items-center space-y-6">
-          
+    <footer className={`mt-8 py-6 border-t border-border ${className}`}>
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="flex flex-col items-center space-y-4">
           {/* Links section */}
-          <div className="flex flex-wrap justify-center items-center gap-6 text-sm">
-            {/* GitHub link */}
+          <div className="flex flex-wrap justify-center items-center gap-4 text-xs">
             <Link
               href="https://github.com/keithhubner/password-vault-generator"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center space-x-1.5 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Github size={16} />
-              <span>View on GitHub</span>
-              <ExternalLink size={12} />
+              <Github size={14} />
+              <span>GitHub</span>
+              <ExternalLink size={10} />
             </Link>
 
-            {/* Blog link */}
             <Link
               href="https://blog.keithhubner.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center space-x-1.5 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <span>Keith&apos;s Blog</span>
-              <ExternalLink size={12} />
+              <span>Blog</span>
+              <ExternalLink size={10} />
             </Link>
           </div>
 
           {/* Logos and support section */}
-          <div className="flex flex-wrap justify-center items-center gap-8">
-            {/* Civo branding */}
+          <div className="flex flex-wrap justify-center items-center gap-6">
             {hostedOnCivo && (
-              <Link 
-                href="https://www.civo.com" 
-                target="_blank" 
+              <Link
+                href="https://www.civo.com"
+                target="_blank"
                 rel="noopener noreferrer"
-                className="transition-all hover:opacity-80 duration-200"
+                className="transition-opacity hover:opacity-70"
                 title="Hosted on Civo"
               >
                 <Image
                   src={civoImageSrc}
                   alt="Hosted on Civo"
-                  width={120}
-                  height={40}
-                  className="h-10 w-auto"
+                  width={100}
+                  height={32}
+                  className="h-8 w-auto opacity-70"
                   onError={() => setImageError(true)}
                 />
               </Link>
             )}
 
-            {/* Buy Me a Coffee */}
             {showBuyMeCoffee && (
               <Link
                 href="https://www.buymeacoffee.com/keithhubner"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:opacity-80"
-                style={{
-                  backgroundColor: '#FFDD00',
-                  color: '#000000',
-                  fontFamily: 'Poppins, sans-serif',
-                  textDecoration: 'none'
-                }}
+                className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors"
               >
                 Buy me a coffee
               </Link>
@@ -126,8 +112,8 @@ export const Footer: React.FC<FooterProps> = ({ className = "" }) => {
           </div>
 
           {/* Copyright */}
-          <div className="text-xs text-gray-500 text-center">
-            <p>© {new Date().getFullYear()} Keith Hubner. Password Vault Generator.</p>
+          <div className="text-2xs text-muted-foreground text-center">
+            <p>&copy; {new Date().getFullYear()} Keith Hubner</p>
           </div>
         </div>
       </div>

@@ -11,16 +11,22 @@ export const createKeePassXItem = (
   weakPasswordPercentage: number,
   reusePasswords: boolean,
   passwordReusePercentage: number,
-  passwordPool: string[]
+  passwordPool: string[],
+  customEnterpriseUrls?: string[]
 ): KeePassXItem[] => {
   const items: KeePassXItem[] = []
 
   for (let i = 0; i < number; i++) {
     let website: string
     if (useRealUrls) {
-      website = useEnterpriseUrls
-        ? faker.helpers.arrayElement(enterpriseWebsites)
-        : faker.helpers.arrayElement(popularWebsites)
+      if (useEnterpriseUrls) {
+        const urlList = customEnterpriseUrls && customEnterpriseUrls.length > 0
+          ? customEnterpriseUrls
+          : enterpriseWebsites
+        website = faker.helpers.arrayElement(urlList)
+      } else {
+        website = faker.helpers.arrayElement(popularWebsites)
+      }
     } else {
       website = faker.internet.domainName()
     }
