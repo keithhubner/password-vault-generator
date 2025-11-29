@@ -127,8 +127,8 @@ async function generateVault(options: VaultGenerationOptions) {
   switch (options.vaultFormat) {
     case 'bitwarden':
       // Generate collections if needed
-      const collections = options.useCollections && options.vaultType === 'org' 
-        ? (options.useNestedCollections 
+      const collections = options.useCollections && options.vaultType === 'org'
+        ? (options.useNestedCollections
             ? generateHierarchicalCollections(
                 options.topLevelCollectionCount,
                 options.collectionNestingDepth,
@@ -158,7 +158,8 @@ async function generateVault(options: VaultGenerationOptions) {
         options.reusePasswords,
         options.passwordReusePercentage,
         passwordPool,
-        options.language
+        options.language,
+        options.enterpriseUrls
       )
 
     case 'lastpass':
@@ -170,7 +171,8 @@ async function generateVault(options: VaultGenerationOptions) {
         options.weakPasswordPercentage,
         options.reusePasswords,
         options.passwordReusePercentage,
-        passwordPool
+        passwordPool,
+        options.enterpriseUrls
       )
       return formatLastPassToCsv(lastPassItems)
 
@@ -185,7 +187,8 @@ async function generateVault(options: VaultGenerationOptions) {
         options.weakPasswordPercentage,
         options.reusePasswords,
         options.passwordReusePercentage,
-        passwordPool
+        passwordPool,
+        options.enterpriseUrls
       )
       return formatKeeperToCsv(keeperVault)
 
@@ -198,7 +201,8 @@ async function generateVault(options: VaultGenerationOptions) {
         options.weakPasswordPercentage,
         options.reusePasswords,
         options.passwordReusePercentage,
-        passwordPool
+        passwordPool,
+        options.enterpriseUrls
       )
       return formatEdgeToCsv(edgeItems)
 
@@ -211,7 +215,8 @@ async function generateVault(options: VaultGenerationOptions) {
         options.weakPasswordPercentage,
         options.reusePasswords,
         options.passwordReusePercentage,
-        passwordPool
+        passwordPool,
+        options.enterpriseUrls
       )
       return formatKeePassXToCsv(keepassxItems)
 
@@ -224,7 +229,8 @@ async function generateVault(options: VaultGenerationOptions) {
         options.weakPasswordPercentage,
         options.reusePasswords,
         options.passwordReusePercentage,
-        passwordPool
+        passwordPool,
+        options.enterpriseUrls
       )
       return convertKeePass2ToXML(keepass2File)
 
@@ -237,7 +243,8 @@ async function generateVault(options: VaultGenerationOptions) {
         options.weakPasswordPercentage,
         options.reusePasswords,
         options.passwordReusePercentage,
-        passwordPool
+        passwordPool,
+        options.enterpriseUrls
       )
       return convertPasswordDepotToCSV(passwordDepotItems)
     

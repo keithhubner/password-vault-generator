@@ -39,8 +39,24 @@ import { ExportButtons } from "./ExportButtons"
 import { VaultPreview } from "./VaultPreview"
 import { DebugEnv } from "./DebugEnv"
 import { Footer } from "./Footer"
+import { useEnterpriseUrls } from "@/hooks/useEnterpriseUrls"
+import { ThemeToggle } from "./ThemeToggle"
 
 export default function PasswordVaultGeneratorImproved() {
+  // Enterprise URLs management
+  const {
+    urls: enterpriseUrls,
+    urlsByCategory: enterpriseUrlsByCategory,
+    totalCount: enterpriseUrlsTotalCount,
+    enabledCount: enterpriseUrlsEnabledCount,
+    addUrl: addEnterpriseUrl,
+    removeUrl: removeEnterpriseUrl,
+    toggleUrl: toggleEnterpriseUrl,
+    toggleAll: toggleAllEnterpriseUrls,
+    importFromCsv: importEnterpriseUrlsCsv,
+    resetToDefaults: resetEnterpriseUrls,
+  } = useEnterpriseUrls()
+
   // State management
   const [loginCount, setLoginCount] = useState(10)
   const [secureNoteCount, setSecureNoteCount] = useState(10)
@@ -61,7 +77,7 @@ export default function PasswordVaultGeneratorImproved() {
     return language
   }, [language])
   const [useRealUrls, setUseRealUrls] = useState(false)
-  const [useEnterpriseUrls, setUseEnterpriseUrls] = useState(false)
+  const [useEnterpriseUrlsOption, setUseEnterpriseUrlsOption] = useState(false)
   const [useCollections, setUseCollections] = useState(false)
   const [collectionCount, setCollectionCount] = useState(10)
   const [distributeItems, setDistributeItems] = useState(false)
@@ -163,7 +179,7 @@ export default function PasswordVaultGeneratorImproved() {
           if (vaultType === "individual") {
             vaultData = generateBitwardenVault(
               loginCount, secureNoteCount, creditCardCount, identityCount,
-              vaultType, useRealUrls, useEnterpriseUrls, [], false,
+              vaultType, useRealUrls, useEnterpriseUrlsOption, [], false,
               useWeakPasswords, weakPasswordPercentage,
               reusePasswords, passwordReusePercentage, passwordPool, currentLang
             )
@@ -201,7 +217,7 @@ export default function PasswordVaultGeneratorImproved() {
 
             vaultData = generateBitwardenVault(
               loginCount, secureNoteCount, creditCardCount, identityCount,
-              vaultType, useRealUrls, useEnterpriseUrls, collections, distributeItems,
+              vaultType, useRealUrls, useEnterpriseUrlsOption, collections, distributeItems,
               useWeakPasswords, weakPasswordPercentage,
               reusePasswords, passwordReusePercentage, passwordPool, currentLang
             )
@@ -211,7 +227,7 @@ export default function PasswordVaultGeneratorImproved() {
 
         case "lastpass":
           vaultData = createLastPassItem(
-            loginCount, useRealUrls, useEnterpriseUrls,
+            loginCount, useRealUrls, useEnterpriseUrlsOption,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
@@ -220,7 +236,7 @@ export default function PasswordVaultGeneratorImproved() {
 
         case "edge":
           vaultData = createEdgePasswordItem(
-            loginCount, useRealUrls, useEnterpriseUrls,
+            loginCount, useRealUrls, useEnterpriseUrlsOption,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
@@ -229,7 +245,7 @@ export default function PasswordVaultGeneratorImproved() {
 
         case "keepassx":
           vaultData = createKeePassXItem(
-            loginCount, useRealUrls, useEnterpriseUrls,
+            loginCount, useRealUrls, useEnterpriseUrlsOption,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
@@ -238,7 +254,7 @@ export default function PasswordVaultGeneratorImproved() {
 
         case "keepass2":
           const keepassFile = createKeePass2File(
-            loginCount, useRealUrls, useEnterpriseUrls,
+            loginCount, useRealUrls, useEnterpriseUrlsOption,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
@@ -247,7 +263,7 @@ export default function PasswordVaultGeneratorImproved() {
 
         case "keeper":
           vaultData = generateKeeperVault(
-            loginCount, useRealUrls, useEnterpriseUrls, useNestedFolders, useRandomDepthNesting,
+            loginCount, useRealUrls, useEnterpriseUrlsOption, useNestedFolders, useRandomDepthNesting,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
@@ -258,7 +274,7 @@ export default function PasswordVaultGeneratorImproved() {
           vaultData = createPasswordDepotItems(
             loginCount,
             useRealUrls,
-            useEnterpriseUrls,
+            useEnterpriseUrlsOption,
             useWeakPasswords,
             weakPasswordPercentage,
             reusePasswords,
@@ -293,7 +309,7 @@ export default function PasswordVaultGeneratorImproved() {
     }
   }, [
     loginCount, secureNoteCount, creditCardCount, identityCount,
-    vaultType, vaultFormat, useRealUrls, useEnterpriseUrls, useCollections, collectionCount,
+    vaultType, vaultFormat, useRealUrls, useEnterpriseUrlsOption, useCollections, collectionCount,
     distributeItems, useNestedFolders, useRandomDepthNesting,
     useNestedCollections, topLevelCollectionCount, collectionNestingDepth,
     totalCollectionCount, useWeakPasswords, weakPasswordPercentage,
@@ -384,28 +400,37 @@ export default function PasswordVaultGeneratorImproved() {
 
   return (
     <ErrorBoundary>
-      <div className="container mx-auto p-4">
-        <DebugEnv />
-        <div className="flex items-center mb-4">
-          <Lock className="h-8 w-8 mr-2" aria-hidden="true" />
-          <h1 className="text-2xl font-bold">Password Vault Generator</h1>
-        </div>
-
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <h3 className="font-semibold text-red-800">Error</h3>
-            <p className="text-red-600">{error.message}</p>
-            <button
-              onClick={resetError}
-              className="mt-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-            >
-              Dismiss
-            </button>
+      <div className="min-h-screen bg-background">
+        {/* Sticky Header */}
+        <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="max-w-2xl mx-auto flex h-12 items-center justify-between px-4">
+            <div className="flex items-center">
+              <Lock className="h-5 w-5 mr-2 text-primary" aria-hidden="true" />
+              <h1 className="text-sm font-semibold tracking-tight">Password Vault Generator</h1>
+            </div>
+            <ThemeToggle />
           </div>
-        )}
+        </header>
 
-        <div className="space-y-6">
-          <VaultConfigForm
+        {/* Main Content */}
+        <main className="max-w-2xl mx-auto px-4 py-4">
+          <DebugEnv />
+
+          {error && (
+            <div className="mb-3 p-3 bg-destructive/10 border border-destructive/30 rounded-md">
+              <h3 className="font-semibold text-destructive text-xs">Error</h3>
+              <p className="text-destructive/80 text-xs mt-1">{error.message}</p>
+              <button
+                onClick={resetError}
+                className="mt-2 px-2.5 py-1 bg-destructive text-destructive-foreground text-xs rounded-md hover:bg-destructive/90 transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <VaultConfigForm
             vaultFormat={vaultFormat}
             onVaultFormatChange={handleVaultFormatChange}
             vaultType={vaultType}
@@ -433,8 +458,17 @@ export default function PasswordVaultGeneratorImproved() {
             onPasswordReusePercentageChange={setPasswordReusePercentage}
             useRealUrls={useRealUrls}
             onUseRealUrlsChange={setUseRealUrls}
-            useEnterpriseUrls={useEnterpriseUrls}
-            onUseEnterpriseUrlsChange={setUseEnterpriseUrls}
+            useEnterpriseUrls={useEnterpriseUrlsOption}
+            onUseEnterpriseUrlsChange={setUseEnterpriseUrlsOption}
+            enterpriseUrlsByCategory={enterpriseUrlsByCategory}
+            enterpriseUrlsEnabledCount={enterpriseUrlsEnabledCount}
+            enterpriseUrlsTotalCount={enterpriseUrlsTotalCount}
+            onAddEnterpriseUrl={addEnterpriseUrl}
+            onRemoveEnterpriseUrl={removeEnterpriseUrl}
+            onToggleEnterpriseUrl={toggleEnterpriseUrl}
+            onToggleAllEnterpriseUrls={toggleAllEnterpriseUrls}
+            onImportEnterpriseUrlsCsv={importEnterpriseUrlsCsv}
+            onResetEnterpriseUrls={resetEnterpriseUrls}
           />
 
           <CollectionSettings
@@ -460,27 +494,28 @@ export default function PasswordVaultGeneratorImproved() {
             onUseRandomDepthNestingChange={setUseRandomDepthNesting}
           />
 
-          <Button onClick={generateVault} disabled={isGenerating} className="w-full">
-            {isGenerating ? "Generating..." : "Generate Vault"}
-          </Button>
-        </div>
-
-        <VaultPreview data={generatedData} onClear={clearGeneratedData} />
-
-        {generatedData && (
-          <div className="mt-4">
-            <ExportButtons
-              vaultFormat={vaultFormat}
-              onDownload={downloadData}
-              disabled={isGenerating}
-            />
+            <Button onClick={generateVault} disabled={isGenerating} className="w-full h-9">
+              {isGenerating ? "Generating..." : "Generate Vault Data"}
+            </Button>
           </div>
-        )}
 
-        <ProgressIndicator progress={progress} isVisible={isGenerating} />
+          <VaultPreview data={generatedData} onClear={clearGeneratedData} />
+
+          {generatedData && (
+            <div className="mt-3">
+              <ExportButtons
+                vaultFormat={vaultFormat}
+                onDownload={downloadData}
+                disabled={isGenerating}
+              />
+            </div>
+          )}
+
+          <ProgressIndicator progress={progress} isVisible={isGenerating} />
+        </main>
+
+        <Footer />
       </div>
-      
-      <Footer />
     </ErrorBoundary>
   )
 }

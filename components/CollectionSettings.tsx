@@ -53,34 +53,46 @@ export const CollectionSettings: React.FC<CollectionSettingsProps> = ({
   const showBitwardenCollections = vaultFormat === "bitwarden" && vaultType === "org"
   const showKeeperFolders = vaultFormat === "keeper"
 
+  if (!showBitwardenCollections && !showKeeperFolders) {
+    return null
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="rounded-md border border-border bg-card p-3 space-y-3">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {showBitwardenCollections ? "Collection Settings" : "Folder Settings"}
+      </h3>
+
       {showBitwardenCollections && (
-        <>
+        <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <Checkbox
               id="useCollections"
               checked={useCollections}
               onCheckedChange={(checked) => onUseCollectionsChange(checked as boolean)}
             />
-            <Label htmlFor="useCollections">Create collections for business departments</Label>
+            <Label htmlFor="useCollections" className="text-xs cursor-pointer">
+              Create collections for business departments
+            </Label>
           </div>
 
           {useCollections && (
-            <>
+            <div className="pl-5 space-y-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="useNestedCollections"
                   checked={useNestedCollections}
                   onCheckedChange={(checked) => onUseNestedCollectionsChange(checked as boolean)}
                 />
-                <Label htmlFor="useNestedCollections">Use nested collections</Label>
+                <Label htmlFor="useNestedCollections" className="text-xs cursor-pointer">
+                  Use nested collections
+                </Label>
               </div>
 
               {useNestedCollections ? (
-                <>
-                  <div>
-                    <Label htmlFor="totalCollectionCount">Total Number of Collections</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="totalCollectionCount" className="text-xs">Total Collections</Label>
                     <Input
                       id="totalCollectionCount"
                       type="number"
@@ -88,14 +100,10 @@ export const CollectionSettings: React.FC<CollectionSettingsProps> = ({
                       onChange={(e) => onTotalCollectionCountChange(Number.parseInt(e.target.value))}
                       min="1"
                       max="100"
-                      aria-describedby="totalCollectionCount-description"
                     />
-                    <p id="totalCollectionCount-description" className="text-sm text-muted-foreground">
-                      Enter the total number of collections to generate across all levels
-                    </p>
                   </div>
-                  <div>
-                    <Label htmlFor="topLevelCollectionCount">Number of Top-Level Collections</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="topLevelCollectionCount" className="text-xs">Top-Level</Label>
                     <Input
                       id="topLevelCollectionCount"
                       type="number"
@@ -103,14 +111,10 @@ export const CollectionSettings: React.FC<CollectionSettingsProps> = ({
                       onChange={(e) => onTopLevelCollectionCountChange(Number.parseInt(e.target.value))}
                       min="1"
                       max="20"
-                      aria-describedby="topLevelCollectionCount-description"
                     />
-                    <p id="topLevelCollectionCount-description" className="text-sm text-muted-foreground">
-                      Enter the number of top-level collections to generate
-                    </p>
                   </div>
-                  <div>
-                    <Label htmlFor="collectionNestingDepth">Maximum Nesting Depth</Label>
+                  <div className="space-y-1 col-span-2">
+                    <Label htmlFor="collectionNestingDepth" className="text-xs">Max Nesting Depth</Label>
                     <Input
                       id="collectionNestingDepth"
                       type="number"
@@ -118,16 +122,12 @@ export const CollectionSettings: React.FC<CollectionSettingsProps> = ({
                       onChange={(e) => onCollectionNestingDepthChange(Number.parseInt(e.target.value))}
                       min="1"
                       max="5"
-                      aria-describedby="collectionNestingDepth-description"
                     />
-                    <p id="collectionNestingDepth-description" className="text-sm text-muted-foreground">
-                      Enter the maximum depth of nested collections (e.g., 3 = Parent/Child/Grandchild)
-                    </p>
                   </div>
-                </>
+                </div>
               ) : (
-                <div>
-                  <Label htmlFor="collectionCount">Number of Collections</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="collectionCount" className="text-xs">Number of Collections</Label>
                   <Input
                     id="collectionCount"
                     type="number"
@@ -135,49 +135,51 @@ export const CollectionSettings: React.FC<CollectionSettingsProps> = ({
                     onChange={(e) => onCollectionCountChange(Number.parseInt(e.target.value))}
                     min="1"
                     max="100"
-                    aria-describedby="collectionCount-description"
                   />
-                  <p id="collectionCount-description" className="text-sm text-muted-foreground">
-                    Enter the number of collections to generate
-                  </p>
                 </div>
               )}
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 pt-1">
                 <Checkbox
                   id="distributeItems"
                   checked={distributeItems}
                   onCheckedChange={(checked) => onDistributeItemsChange(checked as boolean)}
                 />
-                <Label htmlFor="distributeItems">Assign items to collections</Label>
+                <Label htmlFor="distributeItems" className="text-xs cursor-pointer">
+                  Assign items to collections
+                </Label>
               </div>
-            </>
+            </div>
           )}
-        </>
+        </div>
       )}
 
       {showKeeperFolders && (
-        <>
+        <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <Checkbox
               id="useNestedFolders"
               checked={useNestedFolders}
               onCheckedChange={(checked) => onUseNestedFoldersChange(checked as boolean)}
             />
-            <Label htmlFor="useNestedFolders">Use nested folder structure</Label>
+            <Label htmlFor="useNestedFolders" className="text-xs cursor-pointer">
+              Use nested folder structure
+            </Label>
           </div>
 
           {useNestedFolders && (
-            <div className="flex items-center space-x-2 ml-6">
+            <div className="pl-5 flex items-center space-x-2">
               <Checkbox
                 id="useRandomDepthNesting"
                 checked={useRandomDepthNesting}
                 onCheckedChange={(checked) => onUseRandomDepthNestingChange(checked as boolean)}
               />
-              <Label htmlFor="useRandomDepthNesting">Enable deeper random nesting (up to 8 levels)</Label>
+              <Label htmlFor="useRandomDepthNesting" className="text-xs cursor-pointer">
+                Enable deeper random nesting (up to 8 levels)
+              </Label>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   )

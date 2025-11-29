@@ -10,26 +10,27 @@ interface ProgressIndicatorProps {
 export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ progress, isVisible }) => {
   if (!isVisible) return null
 
-  const percentage = Math.round((progress.current / progress.total) * 100)
+  const percentage = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-        <h3 className="text-lg font-semibold mb-4">Generating Vault</h3>
-        <div className="mb-4">
-          <div className="flex justify-between text-sm text-gray-600 mb-1">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-card border border-border rounded-md p-4 max-w-xs w-full mx-4 shadow-lg">
+        <h3 className="text-sm font-semibold mb-3">Generating Vault</h3>
+        <div className="mb-3">
+          <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
             <span>{progress.status}</span>
-            <span>{percentage}%</span>
+            <span className="font-mono">{percentage}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+          <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+            <div
+              className="bg-primary h-full rounded-full transition-[width] duration-200 ease-out"
               style={{ width: `${percentage}%` }}
             />
           </div>
         </div>
-        <p className="text-sm text-gray-500">
-          {progress.current} of {progress.total} items processed
+        <p className="text-xs text-muted-foreground">
+          <span className="font-mono">{progress.current.toLocaleString()}</span> of{" "}
+          <span className="font-mono">{progress.total.toLocaleString()}</span> items
         </p>
       </div>
     </div>

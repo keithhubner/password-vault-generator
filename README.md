@@ -19,6 +19,8 @@ Perfect for testing password manager integrations, security audits, and developm
 - ⚡ **Handle large datasets** (up to 10,000 items) with progress tracking
 - 🔗 **REST API** for programmatic vault generation
 - 🌍 **Multi-language support** with 26 locales and non-standard characters
+- 🏛️ **Enterprise URLs** with 66 pre-configured business domains (customizable)
+- 🌓 **Light/Dark theme** with system preference detection
 
 ## 🚀 Quick Start
 
@@ -68,9 +70,91 @@ Go to **http://localhost:3000** and start generating vault data!
 - **Weak Passwords**: Enable for security testing (configurable percentage)
 - **Password Reuse**: Simulate real-world password habits
 - **Real URLs**: Use actual website domains vs. fake ones
+- **Enterprise URLs**: Use 66 pre-configured enterprise/B2B domains (Salesforce, Jira, etc.)
+- **Custom Enterprise URLs**: Define your own list of domains via UI or API
 - **Nested Collections**: Create hierarchical folder structures
 - **Large Datasets**: Generate thousands of items with progress tracking
 - **Multi-Language Support**: Generate test data with international characters
+- **Theme Toggle**: Switch between light, dark, or system theme
+
+## 🏛️ Enterprise URLs
+
+Generate vault data with realistic enterprise/B2B website URLs commonly found in corporate password vaults. Perfect for testing enterprise password manager deployments.
+
+### Pre-configured Enterprise URLs (66 domains)
+
+The tool includes 66 categorized enterprise URLs across 12 business categories:
+
+| Category | Example Domains |
+|----------|-----------------|
+| **CRM & Sales** | salesforce.com, hubspot.com, zoho.com, pipedrive.com |
+| **Security & SIEM** | crowdstrike.com, splunk.com, paloaltonetworks.com, okta.com |
+| **Enterprise Collaboration** | slack.com, teams.microsoft.com, zoom.us, atlassian.com |
+| **Cloud Infrastructure** | aws.amazon.com, console.cloud.google.com, portal.azure.com |
+| **DevOps & CI/CD** | github.com, gitlab.com, jenkins.io, circleci.com |
+| **Project Management** | jira.atlassian.com, asana.com, monday.com, smartsheet.com |
+| **Analytics & BI** | tableau.com, looker.com, powerbi.microsoft.com |
+| **HR & Talent** | workday.com, greenhouse.io, lever.co, bamboohr.com |
+| **Finance & ERP** | netsuite.com, quickbooks.intuit.com, sap.com |
+| **Document Management** | box.com, dropbox.com, sharepoint.com |
+| **Marketing Automation** | marketo.com, mailchimp.com, sendgrid.com |
+| **IT Service Management** | servicenow.com, zendesk.com, freshservice.com |
+
+### Using Enterprise URLs
+
+**Web Interface:**
+1. Check "Use real website URLs for logins"
+2. Check "Enterprise URLs only"
+3. All 66 enterprise URLs are selected by default
+4. Click the gear icon to manage URLs:
+   - Enable/disable individual URLs
+   - Add custom URLs with categories
+   - Import URLs from CSV
+   - Select All / Deselect All toggle
+   - Reset to defaults
+
+**API Usage:**
+```bash
+# Use default enterprise URLs
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "bitwarden",
+    "loginCount": 50,
+    "useRealUrls": true,
+    "useEnterpriseUrls": true
+  }'
+
+# Use custom enterprise URLs
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "bitwarden",
+    "loginCount": 50,
+    "useRealUrls": true,
+    "useEnterpriseUrls": true,
+    "enterpriseUrls": ["mycompany.com", "internal.corp.net", "dev.example.org"]
+  }'
+```
+
+### Custom URL Management
+
+The Enterprise URLs modal allows you to:
+- **Add Custom URLs**: Enter domain and category, click the + button
+- **Remove Custom URLs**: Hover over custom URL and click X
+- **Import CSV**: Upload a file with one URL per line
+- **Toggle URLs**: Enable/disable individual URLs for generation
+- **Persistent Settings**: Your customizations are saved in localStorage
+
+## 🌓 Theme Support
+
+The application supports light, dark, and system themes:
+
+- **Light Mode**: Clean, bright interface for daytime use
+- **Dark Mode**: Reduced eye strain for low-light environments
+- **System Mode**: Automatically matches your OS preference
+
+Click the theme toggle button in the header to switch between modes. Your preference is saved and persists across sessions.
 
 ## 🌍 Multi-Language Support
 
@@ -227,6 +311,30 @@ curl -X POST http://localhost:3000/api/vault/generate \
   }' > keepass2_export.xml
 ```
 
+#### Enterprise URL Testing
+```bash
+# Generate vault with default enterprise URLs (66 B2B domains)
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "bitwarden",
+    "loginCount": 100,
+    "useRealUrls": true,
+    "useEnterpriseUrls": true
+  }' > enterprise_vault.json
+
+# Generate vault with custom enterprise URLs
+curl -X POST http://localhost:3000/api/vault/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "lastpass",
+    "loginCount": 50,
+    "useRealUrls": true,
+    "useEnterpriseUrls": true,
+    "enterpriseUrls": ["internal.mycompany.com", "vpn.corp.net", "mail.business.org"]
+  }' > custom_enterprise_vault.csv
+```
+
 #### International Character Testing
 ```bash
 # Generate German vault with umlauts and special characters
@@ -273,6 +381,8 @@ curl -X POST http://localhost:3000/api/vault/generate \
 | `creditCardCount` | number | Number of credit cards | Bitwarden only |
 | `identityCount` | number | Number of identity items | Bitwarden only |
 | `useRealUrls` | boolean | Use real website URLs vs fake ones | All |
+| `useEnterpriseUrls` | boolean | Use enterprise/B2B URLs (requires `useRealUrls: true`) | All |
+| `enterpriseUrls` | string[] | Custom list of enterprise URLs to use (overrides defaults) | All |
 | `useWeakPasswords` | boolean | Include weak passwords | All |
 | `weakPasswordPercentage` | number | Percentage of weak passwords (1-100) | All |
 | `reusePasswords` | boolean | Enable password reuse | All |
@@ -491,11 +601,25 @@ The app will automatically show Civo branding when `NEXT_PUBLIC_HOSTED_ON=civo` 
 ```
 **Result**: You'll get a JSON file with 50 realistic login entries
 
-#### Example 2: Security Testing Dataset
+#### Example 2: Enterprise Password Vault
+**Goal**: Test with realistic corporate/enterprise URLs
+```
+1. Open http://localhost:3000
+2. Select any vault format (e.g., "Bitwarden")
+3. Check "Use real website URLs for logins"
+4. Check "Enterprise URLs only"
+5. Click the gear icon to manage URLs
+6. Optionally add custom internal URLs (e.g., "vpn.mycompany.com")
+7. Set login count to 100+
+8. Generate and download
+```
+**Result**: Vault with logins for Salesforce, Jira, AWS, Okta, and other B2B platforms
+
+#### Example 3: Security Testing Dataset
 **Goal**: Test your password manager's security scanning
 ```
 1. Select any vault format
-2. Check "Include weak passwords" 
+2. Check "Include weak passwords"
 3. Set weak password percentage to 40%
 4. Check "Reuse passwords across multiple sites"
 5. Set password reuse to 30%
@@ -504,7 +628,7 @@ The app will automatically show Civo branding when `NEXT_PUBLIC_HOSTED_ON=civo` 
 8. Run security audit to see weak/reused passwords detected
 ```
 
-#### Example 3: Large Organization Vault
+#### Example 4: Large Organization Vault
 **Goal**: Test how your system handles enterprise data
 ```
 1. Select "Bitwarden" format
@@ -519,7 +643,7 @@ The app will automatically show Civo branding when `NEXT_PUBLIC_HOSTED_ON=civo` 
 
 ### API Examples
 
-#### Example 4: Automated Test Data Generation
+#### Example 5: Automated Test Data Generation
 **Goal**: Generate vault data in your CI/CD pipeline
 ```bash
 # Generate Bitwarden test data for automated testing
@@ -538,7 +662,7 @@ curl -X POST http://localhost:3000/api/vault/generate \
 python security_test.py --vault-file test-vault.json
 ```
 
-#### Example 5: Bulk Export for Migration Testing  
+#### Example 6: Bulk Export for Migration Testing  
 **Goal**: Generate multiple format exports for migration testing
 ```bash
 # Generate different formats for the same dataset
@@ -555,7 +679,7 @@ for format in "${formats[@]}"; do
 done
 ```
 
-#### Example 6: Password Depot CSV Export
+#### Example 7: Password Depot CSV Export
 **Goal**: Generate Password Depot compatible data via API
 ```bash
 curl -X POST http://localhost:3000/api/vault/generate \
