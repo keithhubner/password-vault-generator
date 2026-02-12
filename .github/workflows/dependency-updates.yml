@@ -1,0 +1,132 @@
+name: Daily Dependency Updates
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Check for existing PR
+        id: check-pr
+        env:
+          GH_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          OPEN_PRS=$(gh pr list --search "head:deps/npm-updates" --state open --json number --jq 'length')
+          if [ "$OPEN_PRS" -gt 0 ]; then
+            echo "Open dependency update PR already exists, skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        if: steps.check-pr.outputs.skip != 'true'
+        run: npm ci
+
+      - name: Check for outdated packages
+        if: steps.check-pr.outputs.skip != 'true'
+        id: outdated
+        run: |
+          OUTDATED=$(npm outdated --json 2>/dev/null || true)
+          COUNT=$(echo "$OUTDATED" | jq 'length // 0')
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          if [ "$COUNT" -eq 0 ]; then
+            echo "All dependencies are up to date."
+          else
+            echo "Found $COUNT outdated package(s):"
+            echo "$OUTDATED" | jq -r 'to_entries[] | "  \(.key): \(.value.current) → \(.value.wanted)"'
+          fi
+          EOF_MARKER=$(dd if=/dev/urandom bs=15 count=1 2>/dev/null | base64)
+          echo "report<<$EOF_MARKER" >> "$GITHUB_OUTPUT"
+          echo "$OUTDATED" | jq -r 'to_entries[] | "| \(.key) | \(.value.current) | \(.value.wanted) |"' >> "$GITHUB_OUTPUT"
+          echo "$EOF_MARKER" >> "$GITHUB_OUTPUT"
+
+      - name: Update dependencies
+        if: steps.check-pr.outputs.skip != 'true' && steps.outdated.outputs.count != '0'
+        run: |
+          npm update --save
+          npm update --save-dev
+
+      - name: Check for file changes
+        if: steps.check-pr.outputs.skip != 'true' && steps.outdated.outputs.count != '0'
+        id: changes
+        run: |
+          if git diff --quiet package.json package-lock.json; then
+            echo "No file changes after npm update."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate — fresh install
+        if: steps.check-pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
+        run: npm ci
+
+      - name: Validate — lint
+        if: steps.check-pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
+        run: npm run lint
+
+      - name: Validate — build
+        if: steps.check-pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
+        run: npm run build
+
+      - name: Create pull request
+        if: steps.check-pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="deps/npm-updates-$(date +%Y-%m-%d)"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Clean up stale remote branch from previous failed runs
+          git push origin --delete "$BRANCH" 2>/dev/null || true
+
+          git checkout -b "$BRANCH"
+          git add package.json package-lock.json
+          git commit -m "chore(deps): update npm dependencies $(date +%Y-%m-%d)"
+          git push -u origin "$BRANCH"
+
+          gh pr create \
+            --title "chore(deps): update npm dependencies $(date +%Y-%m-%d)" \
+            --body "$(cat <<EOF
+          ## Automated Dependency Update
+
+          Semver-compatible updates found and validated by the daily dependency workflow.
+
+          ### Updated packages
+
+          | Package | From | To |
+          |---------|------|----|
+          ${{ steps.outdated.outputs.report }}
+
+          ### Validation
+
+          - [x] \`npm ci\` — clean install successful
+          - [x] \`npm run lint\` — no lint errors
+          - [x] \`npm run build\` — build successful
+
+          > **Note:** These are semver-safe updates only (\`npm update\`). Major version bumps require manual review.
+          EOF
+          )" \
+            --base main \
+            --head "$BRANCH"
