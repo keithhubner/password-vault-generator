@@ -6,6 +6,15 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.1.0",
+    date: "2026-02-12",
+    changes: [
+      { type: "added", description: "API documentation page at /docs with endpoint reference, parameter tables, format capabilities, examples, and error handling" },
+      { type: "added", description: "Help icon in header linking to documentation" },
+      { type: "added", description: "Docs link in footer navigation" },
+    ],
+  },
+  {
     version: "1.0.0",
     date: "2026-02-12",
     changes: [

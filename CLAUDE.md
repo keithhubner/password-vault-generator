@@ -73,6 +73,13 @@ When adding new features, API endpoints, or changing existing API functionality:
 3. Update API examples if the request/response format changes
 4. If adding a new password manager format, add it to the format capabilities table in the docs
 
+### Versioning Requirements
+
+Every user-facing change must include:
+1. A version bump in `package.json` (patch for fixes, minor for features, major for breaking changes)
+2. A new entry at the top of the `changelog` array in `data/changelog.ts` with the version, today's date, and a list of changes
+3. The version in `package.json` is the single source of truth — it is injected as `NEXT_PUBLIC_APP_VERSION` via `next.config.ts`
+
 ### Plan Requirements
 
 All implementation plans must include a **Required Permissions** section listing every tool and Bash command that will be needed during implementation, so the user can pre-approve them before execution begins.
