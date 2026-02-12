@@ -76,6 +76,13 @@ export const Footer: React.FC<FooterProps> = ({ className = "" }) => {
               <span>Blog</span>
               <ExternalLink size={10} />
             </Link>
+
+            <Link
+              href="/docs"
+              className="flex items-center space-x-1.5 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span>Docs</span>
+            </Link>
           </div>
 
           {/* Logos and support section */}

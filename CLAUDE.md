@@ -65,6 +65,18 @@ Each generator receives standardized options and returns format-specific data:
 5. Add case in `generateVault()` switch in `app/api/vault/generate/route.ts`
 6. Update UI component `components/password-vault-generator.tsx`
 
+### Documentation Requirements
+
+When adding new features, API endpoints, or changing existing API functionality:
+1. Update the docs page at `app/docs/page.tsx` to reflect the changes
+2. Document any new parameters, endpoints, or constraints
+3. Update API examples if the request/response format changes
+4. If adding a new password manager format, add it to the format capabilities table in the docs
+
+### Plan Requirements
+
+All implementation plans must include a **Required Permissions** section listing every tool and Bash command that will be needed during implementation, so the user can pre-approve them before execution begins.
+
 ### Configuration
 
 **Environment**: `NEXT_PUBLIC_HOSTED_ON=civo` for provider branding

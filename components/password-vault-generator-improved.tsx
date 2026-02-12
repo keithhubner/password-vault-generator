@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from "react"
 import { faker } from "@faker-js/faker"
 import { getFakerForLocale } from "../utils/locale-faker"
 import { Button } from "@/components/ui/button"
-import { Lock } from "lucide-react"
+import { Lock, CircleHelp } from "lucide-react"
 import { 
   VaultFormat, 
   VaultType, 
@@ -41,6 +41,7 @@ import { DebugEnv } from "./DebugEnv"
 import { Footer } from "./Footer"
 import { useEnterpriseUrls } from "@/hooks/useEnterpriseUrls"
 import { ThemeToggle } from "./ThemeToggle"
+import Link from "next/link"
 
 export default function PasswordVaultGeneratorImproved() {
   // Enterprise URLs management
@@ -408,7 +409,14 @@ export default function PasswordVaultGeneratorImproved() {
               <Lock className="h-5 w-5 mr-2 text-primary" aria-hidden="true" />
               <h1 className="text-sm font-semibold tracking-tight">Password Vault Generator</h1>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-1">
+              <Link href="/docs" aria-label="API Documentation">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <CircleHelp className="h-4 w-4" />
+                </Button>
+              </Link>
+              <ThemeToggle />
+            </div>
           </div>
         </header>
 
