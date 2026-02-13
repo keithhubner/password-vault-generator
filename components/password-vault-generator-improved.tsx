@@ -30,6 +30,7 @@ import { createKeePassXItem } from "../generators/keepassx-generator"
 import { createKeePass2File, convertKeePass2ToXML } from "../generators/keepass2-generator"
 import { generateKeeperVault } from "../generators/keeper-generator"
 import { createPasswordDepotItems, convertPasswordDepotToCSV } from "../generators/password-depot-generator"
+import { applyMrBlobbyToItems, applyMrBlobbyToKeePass2, applyMrBlobbyToOutput } from "../utils/mr-blobby"
 import { ErrorBoundary } from "./ErrorBoundary"
 import { ProgressIndicator } from "./ProgressIndicator"
 import { VaultConfigForm } from "./VaultConfigForm"
@@ -93,7 +94,9 @@ export default function PasswordVaultGeneratorImproved() {
   const [weakPasswordPercentage, setWeakPasswordPercentage] = useState(20)
   const [reusePasswords, setReusePasswords] = useState(false)
   const [passwordReusePercentage, setPasswordReusePercentage] = useState(30)
-  
+  const [useMrBlobby, setUseMrBlobby] = useState(false)
+  const [mrBlobbyPercentage, setMrBlobbyPercentage] = useState(20)
+
   // Progress and error states
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState<GenerationProgress>({ current: 0, total: 0, status: "" })
@@ -178,12 +181,20 @@ export default function PasswordVaultGeneratorImproved() {
       switch (vaultFormat) {
         case "bitwarden":
           if (vaultType === "individual") {
-            vaultData = generateBitwardenVault(
+            const bwVault = generateBitwardenVault(
               loginCount, secureNoteCount, creditCardCount, identityCount,
               vaultType, useRealUrls, useEnterpriseUrlsOption, [], false,
               useWeakPasswords, weakPasswordPercentage,
               reusePasswords, passwordReusePercentage, passwordPool, currentLang
             )
+            if (useMrBlobby && bwVault && typeof bwVault === 'object' && 'items' in bwVault) {
+              (bwVault as { items: unknown[] }).items = applyMrBlobbyToItems(
+                (bwVault as { items: unknown[] }).items,
+                mrBlobbyPercentage,
+                'bitwarden'
+              )
+            }
+            vaultData = bwVault
           } else {
             const localeFaker = getFakerForLocale(currentLang)
             const orgId = localeFaker.string.uuid()
@@ -216,12 +227,20 @@ export default function PasswordVaultGeneratorImproved() {
               }
             }
 
-            vaultData = generateBitwardenVault(
+            const bwOrgVault = generateBitwardenVault(
               loginCount, secureNoteCount, creditCardCount, identityCount,
               vaultType, useRealUrls, useEnterpriseUrlsOption, collections, distributeItems,
               useWeakPasswords, weakPasswordPercentage,
               reusePasswords, passwordReusePercentage, passwordPool, currentLang
             )
+            if (useMrBlobby && bwOrgVault && typeof bwOrgVault === 'object' && 'items' in bwOrgVault) {
+              (bwOrgVault as { items: unknown[] }).items = applyMrBlobbyToItems(
+                (bwOrgVault as { items: unknown[] }).items,
+                mrBlobbyPercentage,
+                'bitwarden'
+              )
+            }
+            vaultData = bwOrgVault
           }
           formattedData = JSON.stringify(vaultData, null, 2)
           break
@@ -232,6 +251,9 @@ export default function PasswordVaultGeneratorImproved() {
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
+          if (useMrBlobby) {
+            vaultData = applyMrBlobbyToItems(vaultData as Record<string, unknown>[], mrBlobbyPercentage, 'lastpass')
+          }
           formattedData = JSON.stringify(vaultData, null, 2)
           break
 
@@ -241,6 +263,9 @@ export default function PasswordVaultGeneratorImproved() {
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
+          if (useMrBlobby) {
+            vaultData = applyMrBlobbyToItems(vaultData as Record<string, unknown>[], mrBlobbyPercentage, 'edge')
+          }
           formattedData = JSON.stringify(vaultData, null, 2)
           break
 
@@ -250,26 +275,38 @@ export default function PasswordVaultGeneratorImproved() {
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
+          if (useMrBlobby) {
+            vaultData = applyMrBlobbyToItems(vaultData as Record<string, unknown>[], mrBlobbyPercentage, 'keepassx')
+          }
           formattedData = JSON.stringify(vaultData, null, 2)
           break
 
-        case "keepass2":
-          const keepassFile = createKeePass2File(
+        case "keepass2": {
+          let keepassFile = createKeePass2File(
             loginCount, useRealUrls, useEnterpriseUrlsOption,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
+          if (useMrBlobby) {
+            keepassFile = applyMrBlobbyToKeePass2(keepassFile, mrBlobbyPercentage)
+          }
           formattedData = convertKeePass2ToXML(keepassFile)
           break
+        }
 
-        case "keeper":
-          vaultData = generateKeeperVault(
+        case "keeper": {
+          const keeperVault = generateKeeperVault(
             loginCount, useRealUrls, useEnterpriseUrlsOption, useNestedFolders, useRandomDepthNesting,
             useWeakPasswords, weakPasswordPercentage,
             reusePasswords, passwordReusePercentage, passwordPool
           )
+          if (useMrBlobby) {
+            keeperVault.records = applyMrBlobbyToItems(keeperVault.records, mrBlobbyPercentage, 'keeper')
+          }
+          vaultData = keeperVault
           formattedData = JSON.stringify(vaultData, null, 2)
           break
+        }
 
         case "password-depot":
           vaultData = createPasswordDepotItems(
@@ -282,6 +319,9 @@ export default function PasswordVaultGeneratorImproved() {
             passwordReusePercentage,
             passwordPool
           )
+          if (useMrBlobby) {
+            vaultData = applyMrBlobbyToItems(vaultData as Record<string, unknown>[], mrBlobbyPercentage, 'password-depot')
+          }
           formattedData = JSON.stringify(vaultData, null, 2)
           break
 
@@ -314,7 +354,8 @@ export default function PasswordVaultGeneratorImproved() {
     distributeItems, useNestedFolders, useRandomDepthNesting,
     useNestedCollections, topLevelCollectionCount, collectionNestingDepth,
     totalCollectionCount, useWeakPasswords, weakPasswordPercentage,
-    reusePasswords, passwordReusePercentage, language, simulateProgress, validateInputs
+    reusePasswords, passwordReusePercentage, useMrBlobby, mrBlobbyPercentage,
+    language, simulateProgress, validateInputs
   ])
 
   const downloadData = useCallback((format = "json") => {
@@ -371,6 +412,10 @@ export default function PasswordVaultGeneratorImproved() {
           throw new Error(`Unsupported vault format: ${vaultFormat}`)
       }
 
+      if (useMrBlobby) {
+        content = applyMrBlobbyToOutput(content, mrBlobbyPercentage, vaultFormat)
+      }
+
       const blob = createDownloadBlob(content, type)
       downloadFile(blob, filename)
     } catch (err) {
@@ -378,7 +423,7 @@ export default function PasswordVaultGeneratorImproved() {
         message: err instanceof Error ? err.message : "Download failed"
       })
     }
-  }, [generatedData, vaultFormat, vaultType])
+  }, [generatedData, vaultFormat, vaultType, useMrBlobby, mrBlobbyPercentage])
 
   const clearGeneratedData = useCallback(() => {
     if (generatedDataRef.current) {
@@ -477,6 +522,10 @@ export default function PasswordVaultGeneratorImproved() {
             onToggleAllEnterpriseUrls={toggleAllEnterpriseUrls}
             onImportEnterpriseUrlsCsv={importEnterpriseUrlsCsv}
             onResetEnterpriseUrls={resetEnterpriseUrls}
+            useMrBlobby={useMrBlobby}
+            onUseMrBlobbyChange={setUseMrBlobby}
+            mrBlobbyPercentage={mrBlobbyPercentage}
+            onMrBlobbyPercentageChange={setMrBlobbyPercentage}
           />
 
           <CollectionSettings

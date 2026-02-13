@@ -360,6 +360,53 @@ export default function DocsPage() {
           </table>
         </div>
 
+        {/* Data Quality Options */}
+        <h3 className="text-sm font-semibold mb-2">Data Quality (Mr Blobby)</h3>
+        <div className="overflow-x-auto mb-6">
+          <table className="w-full text-sm border border-border">
+            <thead>
+              <tr className="bg-muted">
+                <th className="text-left p-2 border-b border-border font-medium">
+                  Parameter
+                </th>
+                <th className="text-left p-2 border-b border-border font-medium">
+                  Type
+                </th>
+                <th className="text-left p-2 border-b border-border font-medium">
+                  Default
+                </th>
+                <th className="text-left p-2 border-b border-border font-medium">
+                  Description
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="p-2 border-b border-border font-mono text-xs">
+                  useMrBlobby
+                </td>
+                <td className="p-2 border-b border-border text-xs">boolean</td>
+                <td className="p-2 border-b border-border text-xs">false</td>
+                <td className="p-2 border-b border-border text-xs">
+                  Inject deliberately bad data to test import error handling
+                </td>
+              </tr>
+              <tr>
+                <td className="p-2 border-b border-border font-mono text-xs">
+                  mrBlobbyPercentage
+                </td>
+                <td className="p-2 border-b border-border text-xs">number</td>
+                <td className="p-2 border-b border-border text-xs">20</td>
+                <td className="p-2 border-b border-border text-xs">
+                  Percentage of items to corrupt (5 - 100). Injects malformed URLs,
+                  oversized fields, unicode edge cases, empty fields, SQL/XSS payloads,
+                  unescaped CSV delimiters, broken XML entities, and duplicate entries.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         {/* Collection Options */}
         <h3 className="text-sm font-semibold mb-2">
           Collection Options{" "}
@@ -734,6 +781,20 @@ export default function DocsPage() {
     "loginCount": 200,
     "useRealUrls": true
   }' -o lastpass_export.csv`}
+        </pre>
+
+        <h3 className="text-sm font-semibold mb-2">
+          KeePass2 export with bad data injection
+        </h3>
+        <pre className="bg-muted p-4 rounded-md font-mono text-xs overflow-x-auto mb-4">
+{`curl -X POST /api/vault/generate \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "format": "keepass2",
+    "loginCount": 50,
+    "useMrBlobby": true,
+    "mrBlobbyPercentage": 30
+  }' -o keepass2_export.xml`}
         </pre>
 
         <h3 className="text-sm font-semibold mb-2">

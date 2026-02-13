@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { EnterpriseUrlsTooltip } from "@/components/EnterpriseUrlsTooltip"
 import { EnterpriseUrlsModal } from "@/components/EnterpriseUrlsModal"
+import { MrBlobbyTooltip } from "@/components/MrBlobbyTooltip"
 import { UrlEntry } from "@/hooks/useEnterpriseUrls"
 
 interface PasswordOptionsPanelProps {
@@ -29,6 +30,10 @@ interface PasswordOptionsPanelProps {
   onToggleAllEnterpriseUrls?: (enabled: boolean) => void
   onImportEnterpriseUrlsCsv?: (file: File) => Promise<number>
   onResetEnterpriseUrls?: () => void
+  useMrBlobby: boolean
+  onUseMrBlobbyChange: (value: boolean) => void
+  mrBlobbyPercentage: number
+  onMrBlobbyPercentageChange: (value: number) => void
 }
 
 export const PasswordOptionsPanel: React.FC<PasswordOptionsPanelProps> = ({
@@ -53,6 +58,10 @@ export const PasswordOptionsPanel: React.FC<PasswordOptionsPanelProps> = ({
   onToggleAllEnterpriseUrls,
   onImportEnterpriseUrlsCsv,
   onResetEnterpriseUrls,
+  useMrBlobby,
+  onUseMrBlobbyChange,
+  mrBlobbyPercentage,
+  onMrBlobbyPercentageChange,
 }) => {
   const hasEnterpriseUrlsProps =
     enterpriseUrlsByCategory &&
@@ -174,6 +183,37 @@ export const PasswordOptionsPanel: React.FC<PasswordOptionsPanelProps> = ({
                 />
               )}
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className="pt-2 border-t border-border space-y-2">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="useMrBlobby"
+            checked={useMrBlobby}
+            onCheckedChange={(checked) => onUseMrBlobbyChange(checked as boolean)}
+          />
+          <Label htmlFor="useMrBlobby" className="text-xs cursor-pointer">
+            Mr Blobby (inject bad data for import testing)
+          </Label>
+          <MrBlobbyTooltip />
+        </div>
+
+        {useMrBlobby && (
+          <div className="pl-5 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-2xs text-muted-foreground">Bad data percentage</Label>
+              <span className="text-xs font-mono text-primary">{mrBlobbyPercentage}%</span>
+            </div>
+            <Slider
+              id="mrBlobbyPercentage"
+              min={5}
+              max={100}
+              step={5}
+              value={[mrBlobbyPercentage]}
+              onValueChange={(value) => onMrBlobbyPercentageChange(value[0])}
+            />
           </div>
         )}
       </div>

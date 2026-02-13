@@ -32,6 +32,8 @@ export interface VaultGenerationOptions {
   weakPasswordPercentage: number
   reusePasswords: boolean
   passwordReusePercentage: number
+  useMrBlobby: boolean
+  mrBlobbyPercentage: number
   language: string
 }
 

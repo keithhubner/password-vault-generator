@@ -11,6 +11,9 @@ import { Download, Lock } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { createPasswordDepotItems, convertPasswordDepotToCSV } from "../generators/password-depot-generator"
 import { PasswordDepotItem } from "../types/password-depot"
+import { applyMrBlobbyToItems, applyMrBlobbyToKeePass2, applyMrBlobbyToOutput } from "../utils/mr-blobby"
+import type { VaultFormat } from "../types"
+import { MrBlobbyTooltip } from "./MrBlobbyTooltip"
 
 // Bitwarden interfaces
 interface BaseItem {
@@ -1548,6 +1551,8 @@ export default function Component() {
   const [weakPasswordPercentage, setWeakPasswordPercentage] = useState(20)
   const [reusePasswords, setReusePasswords] = useState(false)
   const [passwordReusePercentage, setPasswordReusePercentage] = useState(30)
+  const [useMrBlobby, setUseMrBlobby] = useState(false)
+  const [mrBlobbyPercentage, setMrBlobbyPercentage] = useState(20)
 
   const handleVaultFormatChange = (newFormat: string) => {
     // Clear existing data when format changes
@@ -1625,6 +1630,9 @@ export default function Component() {
             passwordPool,
           ),
         ]
+        if (useMrBlobby) {
+          vault.items = applyMrBlobbyToItems(vault.items, mrBlobbyPercentage, 'bitwarden')
+        }
         setGeneratedData(JSON.stringify(vault, null, 2))
       } else {
         const orgVault: BitwardenOrgVault = { collections: [], items: [] }
@@ -1718,10 +1726,13 @@ export default function Component() {
             passwordPool,
           ),
         ]
+        if (useMrBlobby) {
+          orgVault.items = applyMrBlobbyToItems(orgVault.items, mrBlobbyPercentage, 'bitwarden')
+        }
         setGeneratedData(JSON.stringify(orgVault, null, 2))
       }
     } else if (vaultFormat === "lastpass") {
-      const items = createLastPassItem(
+      let items = createLastPassItem(
         loginCount,
         useRealUrls,
         useEnterpriseUrls,
@@ -1729,9 +1740,12 @@ export default function Component() {
         reusePasswords ? passwordReusePercentage : 0,
         passwordPool,
       )
+      if (useMrBlobby) {
+        items = applyMrBlobbyToItems(items, mrBlobbyPercentage, 'lastpass')
+      }
       setGeneratedData(JSON.stringify(items, null, 2))
     } else if (vaultFormat === "edge") {
-      const items = createEdgePasswordItem(
+      let items = createEdgePasswordItem(
         loginCount,
         useRealUrls,
         useEnterpriseUrls,
@@ -1739,9 +1753,12 @@ export default function Component() {
         reusePasswords ? passwordReusePercentage : 0,
         passwordPool,
       )
+      if (useMrBlobby) {
+        items = applyMrBlobbyToItems(items, mrBlobbyPercentage, 'edge')
+      }
       setGeneratedData(JSON.stringify(items, null, 2))
     } else if (vaultFormat === "keepassx") {
-      const items = createKeePassXItem(
+      let items = createKeePassXItem(
         loginCount,
         useRealUrls,
         useEnterpriseUrls,
@@ -1749,6 +1766,9 @@ export default function Component() {
         reusePasswords ? passwordReusePercentage : 0,
         passwordPool,
       )
+      if (useMrBlobby) {
+        items = applyMrBlobbyToItems(items, mrBlobbyPercentage, 'keepassx')
+      }
       setGeneratedData(JSON.stringify(items, null, 2))
     } else if (vaultFormat === "keeper") {
       // Create folder structure if using nested folders
@@ -1775,9 +1795,12 @@ export default function Component() {
         vault.shared_folders = sharedFolderStructure
       }
 
+      if (useMrBlobby) {
+        vault.records = applyMrBlobbyToItems(vault.records, mrBlobbyPercentage, 'keeper')
+      }
       setGeneratedData(JSON.stringify(vault, null, 2))
     } else if (vaultFormat === "keepass2") {
-      const keepassFile = createKeePass2File(
+      let keepassFile = createKeePass2File(
         loginCount,
         useRealUrls,
         useEnterpriseUrls,
@@ -1786,11 +1809,14 @@ export default function Component() {
         passwordPool,
       )
 
+      if (useMrBlobby) {
+        keepassFile = applyMrBlobbyToKeePass2(keepassFile, mrBlobbyPercentage)
+      }
       // Convert to XML and store
       const xmlData = convertKeePass2ToXML(keepassFile)
       setGeneratedData(xmlData)
     } else if (vaultFormat === "password-depot") {
-      const items = createPasswordDepotItems(
+      let items = createPasswordDepotItems(
         loginCount,
         useRealUrls,
         useEnterpriseUrls,
@@ -1800,6 +1826,9 @@ export default function Component() {
         passwordReusePercentage,
         passwordPool
       )
+      if (useMrBlobby) {
+        items = applyMrBlobbyToItems(items, mrBlobbyPercentage, 'password-depot')
+      }
       setGeneratedData(JSON.stringify(items, null, 2))
     }
   }
@@ -1892,6 +1921,10 @@ export default function Component() {
       // Handle unexpected vault format
       console.error("Unexpected vault format")
       return
+    }
+
+    if (useMrBlobby) {
+      content = applyMrBlobbyToOutput(content, mrBlobbyPercentage, vaultFormat as VaultFormat)
     }
 
     const blob = new Blob([content], { type })
@@ -2077,6 +2110,40 @@ export default function Component() {
             </div>
           )}
         </div>
+
+        <div className="space-y-4 border p-4 rounded-md">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="useMrBlobby"
+              checked={useMrBlobby}
+              onCheckedChange={(checked) => setUseMrBlobby(checked as boolean)}
+            />
+            <Label htmlFor="useMrBlobby">Mr Blobby (inject bad data for import testing)</Label>
+            <MrBlobbyTooltip />
+          </div>
+
+          {useMrBlobby && (
+            <div>
+              <Label htmlFor="mrBlobbyPercentage">Bad Data Percentage</Label>
+              <div className="flex items-center gap-4">
+                <Slider
+                  id="mrBlobbyPercentage"
+                  min={5}
+                  max={100}
+                  step={5}
+                  value={[mrBlobbyPercentage]}
+                  onValueChange={(value) => setMrBlobbyPercentage(value[0])}
+                  className="flex-1"
+                />
+                <span className="w-12 text-center">{mrBlobbyPercentage}%</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Percentage of items that will have bad data injected (malformed URLs, oversized fields, injection payloads, etc.)
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center space-x-2">
           <Checkbox
             id="useRealUrls"

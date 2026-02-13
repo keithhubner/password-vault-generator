@@ -6,6 +6,7 @@ import { createEdgePasswordItem } from '@/generators/edge-generator'
 import { createKeePassXItem } from '@/generators/keepassx-generator'
 import { createKeePass2File, convertKeePass2ToXML } from '@/generators/keepass2-generator'
 import { createPasswordDepotItems, convertPasswordDepotToCSV } from '@/generators/password-depot-generator'
+import { applyMrBlobbyToItems, applyMrBlobbyToKeePass2, applyMrBlobbyToOutput } from '@/utils/mr-blobby'
 import { formatLastPassToCsv, formatEdgeToCsv, formatKeePassXToCsv, formatKeeperToCsv } from '@/utils/data-formatters'
 import { initializePasswordPool } from '@/utils/password-generators'
 import { generateUniqueCollectionNames, generateHierarchicalCollections } from '@/utils/collection-generators'
@@ -88,6 +89,8 @@ function buildGenerationOptions(body: VaultGenerateRequest): VaultGenerationOpti
     weakPasswordPercentage: 20,
     reusePasswords: false,
     passwordReusePercentage: 10,
+    useMrBlobby: false,
+    mrBlobbyPercentage: 20,
     language: 'en',
   }
 
@@ -143,7 +146,7 @@ async function generateVault(options: VaultGenerationOptions) {
           }))
         : []
 
-      return generateBitwardenVault(
+      const bwVault = generateBitwardenVault(
         options.loginCount,
         options.secureNoteCount,
         options.creditCardCount,
@@ -161,9 +164,17 @@ async function generateVault(options: VaultGenerationOptions) {
         options.language,
         options.enterpriseUrls
       )
+      if (options.useMrBlobby && bwVault && typeof bwVault === 'object' && 'items' in bwVault) {
+        (bwVault as { items: unknown[] }).items = applyMrBlobbyToItems(
+          (bwVault as { items: unknown[] }).items,
+          options.mrBlobbyPercentage,
+          'bitwarden'
+        )
+      }
+      return bwVault
 
-    case 'lastpass':
-      const lastPassItems = createLastPassItem(
+    case 'lastpass': {
+      let lastPassItems = createLastPassItem(
         options.loginCount,
         options.useRealUrls,
         options.useEnterpriseUrls,
@@ -174,9 +185,17 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool,
         options.enterpriseUrls
       )
-      return formatLastPassToCsv(lastPassItems)
+      if (options.useMrBlobby) {
+        lastPassItems = applyMrBlobbyToItems(lastPassItems, options.mrBlobbyPercentage, 'lastpass')
+      }
+      let lastPassCsv = formatLastPassToCsv(lastPassItems)
+      if (options.useMrBlobby) {
+        lastPassCsv = applyMrBlobbyToOutput(lastPassCsv, options.mrBlobbyPercentage, 'lastpass')
+      }
+      return lastPassCsv
+    }
 
-    case 'keeper':
+    case 'keeper': {
       const keeperVault = generateKeeperVault(
         options.loginCount,
         options.useRealUrls,
@@ -190,10 +209,18 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool,
         options.enterpriseUrls
       )
-      return formatKeeperToCsv(keeperVault)
+      if (options.useMrBlobby) {
+        keeperVault.records = applyMrBlobbyToItems(keeperVault.records, options.mrBlobbyPercentage, 'keeper')
+      }
+      let keeperCsv = formatKeeperToCsv(keeperVault)
+      if (options.useMrBlobby) {
+        keeperCsv = applyMrBlobbyToOutput(keeperCsv, options.mrBlobbyPercentage, 'keeper')
+      }
+      return keeperCsv
+    }
 
-    case 'edge':
-      const edgeItems = createEdgePasswordItem(
+    case 'edge': {
+      let edgeItems = createEdgePasswordItem(
         options.loginCount,
         options.useRealUrls,
         options.useEnterpriseUrls,
@@ -204,10 +231,18 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool,
         options.enterpriseUrls
       )
-      return formatEdgeToCsv(edgeItems)
+      if (options.useMrBlobby) {
+        edgeItems = applyMrBlobbyToItems(edgeItems, options.mrBlobbyPercentage, 'edge')
+      }
+      let edgeCsv = formatEdgeToCsv(edgeItems)
+      if (options.useMrBlobby) {
+        edgeCsv = applyMrBlobbyToOutput(edgeCsv, options.mrBlobbyPercentage, 'edge')
+      }
+      return edgeCsv
+    }
 
-    case 'keepassx':
-      const keepassxItems = createKeePassXItem(
+    case 'keepassx': {
+      let keepassxItems = createKeePassXItem(
         options.loginCount,
         options.useRealUrls,
         options.useEnterpriseUrls,
@@ -218,10 +253,18 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool,
         options.enterpriseUrls
       )
-      return formatKeePassXToCsv(keepassxItems)
+      if (options.useMrBlobby) {
+        keepassxItems = applyMrBlobbyToItems(keepassxItems, options.mrBlobbyPercentage, 'keepassx')
+      }
+      let keepassxCsv = formatKeePassXToCsv(keepassxItems)
+      if (options.useMrBlobby) {
+        keepassxCsv = applyMrBlobbyToOutput(keepassxCsv, options.mrBlobbyPercentage, 'keepassx')
+      }
+      return keepassxCsv
+    }
 
-    case 'keepass2':
-      const keepass2File = createKeePass2File(
+    case 'keepass2': {
+      let keepass2File = createKeePass2File(
         options.loginCount,
         options.useRealUrls,
         options.useEnterpriseUrls,
@@ -232,10 +275,18 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool,
         options.enterpriseUrls
       )
-      return convertKeePass2ToXML(keepass2File)
+      if (options.useMrBlobby) {
+        keepass2File = applyMrBlobbyToKeePass2(keepass2File, options.mrBlobbyPercentage)
+      }
+      let keepass2Xml = convertKeePass2ToXML(keepass2File)
+      if (options.useMrBlobby) {
+        keepass2Xml = applyMrBlobbyToOutput(keepass2Xml, options.mrBlobbyPercentage, 'keepass2')
+      }
+      return keepass2Xml
+    }
 
-    case 'password-depot':
-      const passwordDepotItems = createPasswordDepotItems(
+    case 'password-depot': {
+      let passwordDepotItems = createPasswordDepotItems(
         options.loginCount,
         options.useRealUrls,
         options.useEnterpriseUrls,
@@ -246,7 +297,15 @@ async function generateVault(options: VaultGenerationOptions) {
         passwordPool,
         options.enterpriseUrls
       )
-      return convertPasswordDepotToCSV(passwordDepotItems)
+      if (options.useMrBlobby) {
+        passwordDepotItems = applyMrBlobbyToItems(passwordDepotItems, options.mrBlobbyPercentage, 'password-depot')
+      }
+      let pdCsv = convertPasswordDepotToCSV(passwordDepotItems)
+      if (options.useMrBlobby) {
+        pdCsv = applyMrBlobbyToOutput(pdCsv, options.mrBlobbyPercentage, 'password-depot')
+      }
+      return pdCsv
+    }
     
     default:
       throw new Error(`Unsupported format: ${options.vaultFormat}`)

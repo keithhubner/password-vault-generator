@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.2.0",
+    date: "2026-02-13",
+    changes: [
+      { type: "added", description: "Mr Blobby mode: injects bad data into exports to test password manager import error handling" },
+      { type: "added", description: "Format-aware corruption: CSV delimiter breaks, XML entity injection, oversized fields, unicode edge cases, malformed URLs, and injection payloads" },
+    ],
+  },
+  {
     version: "1.1.0",
     date: "2026-02-12",
     changes: [

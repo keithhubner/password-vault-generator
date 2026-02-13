@@ -136,6 +136,17 @@ export function validateGenerationParams(body: unknown): SecurityValidationResul
     }
   }
 
+  // Validate Mr Blobby percentage
+  if (requestBody.mrBlobbyPercentage !== undefined) {
+    const pct = requestBody.mrBlobbyPercentage
+    if (typeof pct !== 'number' || pct < 5 || pct > 100) {
+      return {
+        isValid: false,
+        error: 'mrBlobbyPercentage must be a number between 5 and 100'
+      }
+    }
+  }
+
   // Validate percentage fields
   const percentageFields = ['weakPasswordPercentage', 'passwordReusePercentage']
   for (const field of percentageFields) {
