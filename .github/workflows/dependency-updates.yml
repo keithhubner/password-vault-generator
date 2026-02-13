@@ -46,18 +46,19 @@ jobs:
         id: outdated
         run: |
           OUTDATED=$(npm outdated --json 2>/dev/null || true)
-          COUNT=$(echo "$OUTDATED" | jq 'length // 0')
+          if [ -z "$OUTDATED" ]; then
+            OUTDATED="{}"
+          fi
+          # Keep only packages where npm update will change the version
+          UPDATABLE=$(echo "$OUTDATED" | jq '[to_entries[] | select(.value.current != .value.wanted)] | from_entries')
+          COUNT=$(echo "$UPDATABLE" | jq 'length')
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
           if [ "$COUNT" -eq 0 ]; then
             echo "All dependencies are up to date."
           else
-            echo "Found $COUNT outdated package(s):"
-            echo "$OUTDATED" | jq -r 'to_entries[] | "  \(.key): \(.value.current) → \(.value.wanted)"'
+            echo "Found $COUNT updatable package(s):"
+            echo "$UPDATABLE" | jq -r 'to_entries[] | "  \(.key): \(.value.current) → \(.value.wanted)"'
           fi
-          EOF_MARKER=$(dd if=/dev/urandom bs=15 count=1 2>/dev/null | base64)
-          echo "report<<$EOF_MARKER" >> "$GITHUB_OUTPUT"
-          echo "$OUTDATED" | jq -r 'to_entries[] | "| \(.key) | \(.value.current) | \(.value.wanted) |"' >> "$GITHUB_OUTPUT"
-          echo "$EOF_MARKER" >> "$GITHUB_OUTPUT"
 
       - name: Update dependencies
         if: steps.check-pr.outputs.skip != 'true' && steps.outdated.outputs.count != '0'
@@ -74,6 +75,23 @@ jobs:
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
+
+            BEFORE=$(git show HEAD:package.json)
+            AFTER=$(cat package.json)
+
+            EOF_MARKER=$(dd if=/dev/urandom bs=15 count=1 2>/dev/null | base64)
+            echo "report<<$EOF_MARKER" >> "$GITHUB_OUTPUT"
+            jq -n \
+              --argjson before "$BEFORE" \
+              --argjson after "$AFTER" \
+              -r '
+              def merge_deps: [(.dependencies // {}), (.devDependencies // {})] | add // {};
+              ($before | merge_deps) as $b |
+              ($after | merge_deps) as $a |
+              [$a | to_entries[] | select($b[.key] != null and $b[.key] != .value) |
+                "| \(.key) | \($b[.key]) | \(.value) |"] | .[]
+              ' >> "$GITHUB_OUTPUT"
+            echo "$EOF_MARKER" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Validate — fresh install
@@ -117,7 +135,7 @@ jobs:
 
           | Package | From | To |
           |---------|------|----|
-          ${{ steps.outdated.outputs.report }}
+          ${{ steps.changes.outputs.report }}
 
           ### Validation
 
