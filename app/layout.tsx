@@ -33,11 +33,11 @@ export default function RootLayout({
           <Script
             async
             src="https://plausible.jankylabs.co.uk/js/pa-uFRSGhFW3VizYjRBsM-4_.js"
-            strategy="afterInteractive"
+            strategy="beforeInteractive"
           />
           <Script
             id="plausible-init"
-            strategy="afterInteractive"
+            strategy="beforeInteractive"
             dangerouslySetInnerHTML={{
               __html: `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`,
             }}
