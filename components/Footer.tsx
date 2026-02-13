@@ -121,6 +121,7 @@ export const Footer: React.FC<FooterProps> = ({ className = "" }) => {
           {/* Copyright */}
           <div className="text-2xs text-muted-foreground text-center">
             <p>&copy; {new Date().getFullYear()} Keith Hubner</p>
+            <p>Made with ❤️ hosted in 🇬🇧</p>
             <Link href="/changelog" className="text-2xs text-muted-foreground hover:text-foreground transition-colors">
               v{process.env.NEXT_PUBLIC_APP_VERSION}
             </Link>

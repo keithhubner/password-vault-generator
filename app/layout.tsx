@@ -31,9 +31,16 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Script
-            defer
-            data-domain="passwordvaultgenerator.com"
-            src="https://plausible.jankylabs.co.uk/js/script.js"
+            async
+            src="https://plausible.jankylabs.co.uk/js/pa-uFRSGhFW3VizYjRBsM-4_.js"
+            strategy="afterInteractive"
+          />
+          <Script
+            id="plausible-init"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`,
+            }}
           />
           {children}
         </ThemeProvider>
