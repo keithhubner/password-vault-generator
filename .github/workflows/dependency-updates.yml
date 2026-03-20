@@ -106,6 +106,35 @@ jobs:
         if: steps.check-pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
         run: npm run build
 
+      - name: Validate — start server
+        if: steps.check-pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
+        run: npm start & echo $! > server.pid
+
+      - name: Validate — wait for server
+        if: steps.check-pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
+        run: |
+          echo "Waiting for server..."
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:3000/api/config > /dev/null 2>&1; then
+              echo "Server is ready (attempt $i)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Server failed to start within 60s"
+          exit 1
+
+      - name: Validate — API tests
+        if: steps.check-pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
+        run: npm run test:api
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f server.pid ]; then
+            kill "$(cat server.pid)" 2>/dev/null || true
+          fi
+
       - name: Create pull request
         if: steps.check-pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
         env:
@@ -142,6 +171,7 @@ jobs:
           - [x] \`npm ci\` — clean install successful
           - [x] \`npm run lint\` — no lint errors
           - [x] \`npm run build\` — build successful
+          - [x] \`npm run test:api\` — API tests passed
 
           > **Note:** These are semver-safe updates only (\`npm update\`). Major version bumps require manual review.
           EOF
