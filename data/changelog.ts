@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.2.1",
+    date: "2026-08-04",
+    changes: [
+      { type: "fixed", description: "Security: forced postcss to 8.5.25 and sharp to 0.35.3 via npm overrides, resolving five Dependabot alerts inherited from Next.js transitive dependencies" },
+      { type: "changed", description: "Upgraded Node.js from 18 to 22 in the Docker image and CI workflows (Node 18 is end-of-life and sharp 0.35 requires Node 20.9+)" },
+    ],
+  },
+  {
     version: "1.2.0",
     date: "2026-02-13",
     changes: [

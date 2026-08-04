@@ -1,5 +1,5 @@
-# Use Node.js 18 as the base image
-FROM node:18-alpine AS builder
+# Use Node.js 22 as the base image
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ RUN npm cache clean --force && npm install --legacy-peer-deps --verbose
 RUN npm run build
 
 # Use a smaller base image for the production environment
-FROM node:18-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 
