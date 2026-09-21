@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.2.4",
+    date: "2026-09-21",
+    changes: [
+      { type: "fixed", description: "Analytics events were silently blocked by CSP after 1.2.3: the tracking script is served from metrics.passwordvaultgenerator.com but still posted events to the old host baked into it, which connect-src no longer allows. The event endpoint is now overridden to match" },
+    ],
+  },
+  {
     version: "1.2.3",
     date: "2026-09-21",
     changes: [

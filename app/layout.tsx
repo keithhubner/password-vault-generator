@@ -35,11 +35,14 @@ export default function RootLayout({
             src="https://metrics.passwordvaultgenerator.com/js/pa-uFRSGhFW3VizYjRBsM-4_.js"
             strategy="beforeInteractive"
           />
+          {/* The endpoint baked into the script points at the Plausible instance's
+              BASE_URL, not at the host the script was served from, so it must be
+              overridden here to match the CSP connect-src. */}
           <Script
             id="plausible-init"
             strategy="beforeInteractive"
             dangerouslySetInnerHTML={{
-              __html: `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`,
+              __html: `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init({endpoint:"https://metrics.passwordvaultgenerator.com/api/event"})`,
             }}
           />
           {children}
