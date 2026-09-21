@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.2.3",
+    date: "2026-09-21",
+    changes: [
+      { type: "changed", description: "Analytics now load from metrics.passwordvaultgenerator.com instead of plausible.jankylabs.co.uk, so reporting is attributed to the right site (CSP script-src and connect-src updated to match)" },
+    ],
+  },
+  {
     version: "1.2.2",
     date: "2026-09-21",
     changes: [
