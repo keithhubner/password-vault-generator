@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.2.2",
+    date: "2026-09-21",
+    changes: [
+      { type: "fixed", description: "Copying the output preview now copies the real password and TOTP values instead of asterisks" },
+      { type: "removed", description: "Password masking and the show/hide toggle in the output preview - generated vault data is dummy data, so there is nothing to hide" },
+    ],
+  },
+  {
     version: "1.2.1",
     date: "2026-08-04",
     changes: [
