@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Eye, EyeOff, Copy, X } from "lucide-react"
+import { Copy, X } from "lucide-react"
 
 interface VaultPreviewProps {
   data: string
@@ -11,21 +11,15 @@ interface VaultPreviewProps {
 
 export const VaultPreview: React.FC<VaultPreviewProps> = ({ data, onClear }) => {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [showSensitive, setShowSensitive] = useState(false)
   const [copied, setCopied] = useState(false)
 
   if (!data) return null
 
-  const previewData = showSensitive
-    ? data
-    : data.replace(/"password":\s*"[^"]*"/g, '"password": "************"')
-          .replace(/"totp":\s*"[^"]*"/g, '"totp": "************"')
-
-  const truncatedData = isExpanded ? previewData : previewData.slice(0, 2000) + (previewData.length > 2000 ? "..." : "")
+  const truncatedData = isExpanded ? data : data.slice(0, 2000) + (data.length > 2000 ? "..." : "")
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(showSensitive ? data : previewData)
+      await navigator.clipboard.writeText(data)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
@@ -45,15 +39,6 @@ export const VaultPreview: React.FC<VaultPreviewProps> = ({ data, onClear }) => 
           Output Preview
         </span>
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setShowSensitive(!showSensitive)}
-            title={showSensitive ? "Hide passwords" : "Show passwords"}
-          >
-            {showSensitive ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-          </Button>
           <Button
             variant="ghost"
             size="icon"
