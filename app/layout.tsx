@@ -32,7 +32,7 @@ export default function RootLayout({
         >
           <Script
             async
-            src="https://plausible.jankylabs.co.uk/js/pa-uFRSGhFW3VizYjRBsM-4_.js"
+            src="https://metrics.passwordvaultgenerator.com/js/pa-uFRSGhFW3VizYjRBsM-4_.js"
             strategy="beforeInteractive"
           />
           <Script
