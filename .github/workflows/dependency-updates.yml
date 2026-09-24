@@ -316,11 +316,55 @@ jobs:
             echo "should_merge=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Post assessment
+      # Waits for the PR's own CI before merging. The workflow already ran
+      # lint/build/tests before opening the PR, but that was on this runner -
+      # this is the PR's checks, the same ones a human would look at.
+      #
+      # Fails closed: if no check ever registers, or any check fails, the PR is
+      # left open. The scheduled run that gets here is not itself a check on the
+      # PR, so there is no deadlock.
+      - name: Wait for PR checks
+        id: checks
+        if: steps.verdict.outputs.should_merge == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COUNT=0
+          for _ in $(seq 1 20); do
+            COUNT=$(gh pr checks "$PR_NUMBER" --json name --jq 'length' 2>/dev/null || echo 0)
+            [ "$COUNT" -gt 0 ] && break
+            echo "No checks registered yet, waiting..."
+            sleep 15
+          done
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "No CI checks ever registered on PR #$PR_NUMBER - refusing to merge."
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "detail=no checks registered on the PR" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if gh pr checks "$PR_NUMBER" --watch --fail-fast --interval 30; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+            echo "detail=all checks passed" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "detail=one or more checks failed" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Posted with GITHUB_TOKEN on purpose, so the comment comes from
+      # github-actions[bot]. GitHub does not notify you about your own actions,
+      # and the merge below runs as the PAT owner - a self-mention would be
+      # silent. From the bot, the @mention actually reaches the codeowner.
+      - name: Post assessment and notify codeowner
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CONFIDENCE: ${{ steps.verdict.outputs.confidence }}
           REASON: ${{ steps.verdict.outputs.reason }}
+          SHOULD_MERGE: ${{ steps.verdict.outputs.should_merge }}
+          CHECKS_PASSED: ${{ steps.checks.outputs.passed }}
+          CHECKS_DETAIL: ${{ steps.checks.outputs.detail }}
         run: |
           if [ "$REASON" = "ok" ]; then
             SUMMARY=$(jq -r '.summary // "No summary provided."' dep-review-verdict.json)
@@ -332,14 +376,26 @@ jobs:
             CONCERNS="_Unavailable._"
           fi
 
-          if [ "$CONFIDENCE" -ge "$CONFIDENCE_THRESHOLD" ]; then
-            VERDICT="Confidence **$CONFIDENCE/100** meets the threshold of $CONFIDENCE_THRESHOLD - merging automatically."
+          # Everyone named in CODEOWNERS, falling back to the repo owner.
+          OWNERS=$(grep -ohE '@[A-Za-z0-9_/-]+' .github/CODEOWNERS 2>/dev/null | sort -u | tr '\n' ' ')
+          [ -z "$OWNERS" ] && OWNERS="@${GITHUB_REPOSITORY%%/*}"
+
+          if [ "$SHOULD_MERGE" = "true" ] && [ "$CHECKS_PASSED" = "true" ]; then
+            HEADING="Merged automatically"
+            VERDICT="Confidence **$CONFIDENCE/100** met the threshold of $CONFIDENCE_THRESHOLD and all CI checks passed, so this was merged and deployed without human review."
+            NOTIFY="$OWNERS - heads up: this dependency update was merged and deployed automatically. Nothing is required of you; this notice exists so an unattended change to production is not silent."
+          elif [ "$SHOULD_MERGE" = "true" ]; then
+            HEADING="Not merged - CI did not pass"
+            VERDICT="Confidence **$CONFIDENCE/100** met the threshold, but the PR was **not** merged: $CHECKS_DETAIL."
+            NOTIFY="$OWNERS - this one needs you."
           else
-            VERDICT="Confidence **$CONFIDENCE/100** is below the threshold of $CONFIDENCE_THRESHOLD - leaving this PR open for you."
+            HEADING="Left for review"
+            VERDICT="Confidence **$CONFIDENCE/100** is below the threshold of $CONFIDENCE_THRESHOLD, so this PR is left open for you."
+            NOTIFY="$OWNERS - this one needs you."
           fi
 
           gh pr comment "$PR_NUMBER" --body "$(cat <<EOF
-          ## Claude dependency review
+          ## Claude dependency review - $HEADING
 
           $VERDICT
 
@@ -353,23 +409,33 @@ jobs:
 
           $CONCERNS
 
+          ---
+
+          $NOTIFY
+
           <sub>The diff here is version numbers, not dependency source, so this assesses how routine the bump looks - not whether the published packages are safe. Threshold is set in \`dependency-updates.yml\`.</sub>
           EOF
           )"
 
-      - name: Merge if confident
-        if: steps.verdict.outputs.should_merge == 'true'
+      # Merges with the PAT so the push to main triggers the deploy workflow.
+      # GITHUB_TOKEN would merge but never deploy.
+      - name: Merge and deploy
+        if: steps.verdict.outputs.should_merge == 'true' && steps.checks.outputs.passed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PVG_PAT || secrets.GITHUB_TOKEN }}
         run: |
-          # Belt and braces: re-check here so a mistyped step-level condition
-          # cannot merge something below the threshold.
+          # Belt and braces: re-check both gates here so a mistyped step
+          # condition cannot merge something that should not be merged.
           CONF="${{ steps.verdict.outputs.confidence }}"
           if [ "$CONF" -lt "$CONFIDENCE_THRESHOLD" ]; then
             echo "Confidence $CONF is below $CONFIDENCE_THRESHOLD - refusing to merge."
             exit 1
           fi
+          if [ "${{ steps.checks.outputs.passed }}" != "true" ]; then
+            echo "CI checks did not pass - refusing to merge."
+            exit 1
+          fi
+
           gh pr merge "$PR_NUMBER" --merge --delete-branch
-          echo "Merged PR #$PR_NUMBER."
-          echo "Note: this push was made with GITHUB_TOKEN, so it does not trigger" \
-               "the deploy workflow. The update ships with the next deploy."
+          echo "Merged PR #$PR_NUMBER. The deploy workflow runs on the resulting push to main,"
+          echo "and its deploy job requires its own test job to pass first."
