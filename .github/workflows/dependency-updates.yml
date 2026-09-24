@@ -13,6 +13,8 @@ jobs:
   update-dependencies:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      pr_number: ${{ steps.create-pr.outputs.pr_number }}
 
     steps:
       - name: Checkout repository
@@ -27,7 +29,7 @@ jobs:
       - name: Check for existing PR
         id: check-pr
         env:
-          GH_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PVG_PAT || secrets.GITHUB_TOKEN }}
         run: |
           OPEN_PRS=$(gh pr list --search "head:deps/npm-updates" --state open --json number --jq 'length')
           if [ "$OPEN_PRS" -gt 0 ]; then
@@ -136,9 +138,10 @@ jobs:
           fi
 
       - name: Create pull request
+        id: create-pr
         if: steps.check-pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
         env:
-          GH_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PVG_PAT || secrets.GITHUB_TOKEN }}
         run: |
           BRANCH="deps/npm-updates-$(date +%Y-%m-%d)"
 
@@ -153,7 +156,7 @@ jobs:
           git commit -m "chore(deps): update npm dependencies $(date +%Y-%m-%d)"
           git push -u origin "$BRANCH"
 
-          gh pr create \
+          PR_URL=$(gh pr create \
             --title "chore(deps): update npm dependencies $(date +%Y-%m-%d)" \
             --body "$(cat <<EOF
           ## Automated Dependency Update
@@ -177,4 +180,262 @@ jobs:
           EOF
           )" \
             --base main \
-            --head "$BRANCH"
+            --head "$BRANCH")
+
+          echo "$PR_URL"
+          echo "pr_number=${PR_URL##*/}" >> "$GITHUB_OUTPUT"
+
+  # Reviews the dependency PR and merges it only when Claude is highly
+  # confident the bump is routine.
+  #
+  # Claude's only job here is to produce a JSON verdict. Every GitHub action
+  # (commenting, merging) is done by the workflow from that verdict, so a
+  # missing, malformed or unparseable verdict cannot result in a merge.
+  #
+  # Scope note: the diff on these PRs is package.json and package-lock.json -
+  # version numbers, not the dependencies' source. The verdict reflects how
+  # routine the bump looks, not whether the published package is safe.
+  ai-review:
+    needs: update-dependencies
+    if: needs.update-dependencies.outputs.pr_number != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+      id-token: write
+
+    env:
+      PR_NUMBER: ${{ needs.update-dependencies.outputs.pr_number }}
+      # Auto-merge requires at least this confidence. See the rubric in the
+      # prompt below before changing it.
+      CONFIDENCE_THRESHOLD: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Claude dependency review
+        id: claude
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: '--allowedTools "Read,Glob,Grep,Write,Bash(git diff:*),Bash(git log:*),Bash(npm view:*)"'
+          prompt: |
+            Assess pull request #${{ needs.update-dependencies.outputs.pr_number }} in
+            ${{ github.repository }}, an automated npm dependency update.
+
+            Inspect the change with: git diff origin/main...HEAD -- package.json package-lock.json
+
+            You are judging how ROUTINE this bump is. You cannot see the published
+            source of these packages, so do not claim anything about whether a
+            release is safe or malicious - judge only what the diff and the
+            packages' public metadata support.
+
+            Weigh:
+              - semver distance: patch < minor < major (npm update should never
+                produce a major bump; treat one as a red flag)
+              - how widely used and well maintained each package is
+              - how many transitive entries changed in package-lock.json relative
+                to the direct dependencies
+              - whether any package changed owner, repository URL or license
+              - anything unusual: a brand new package, a version far ahead of the
+                previous one, a package resolving to an unexpected registry
+
+            The workflow has already verified that npm ci, lint, build and the API
+            tests all pass on this branch. Factor that in, but remember green
+            tests do not establish that a dependency is trustworthy.
+
+            Confidence rubric (0-100), where the score is your confidence that
+            merging this WITHOUT human review is the right call:
+              90-100  every change is a patch or minor bump of an established,
+                      widely used package; lockfile churn is proportionate;
+                      nothing unusual
+              70-89   routine overall, but something merits a human glance
+              40-69   material uncertainty, or a change you cannot explain
+              0-39    a major bump, a red flag above, or anything you would want
+                      a person to look at
+
+            Be conservative. If you are unsure, score lower. A missed merge costs
+            someone a click; a wrong merge ships to production.
+
+            Write your verdict to dep-review-verdict.json in the repository root,
+            and write nothing else to the repo. Exactly this shape:
+
+            {
+              "confidence": <integer 0-100>,
+              "summary": "<one or two sentences on what changed and why you scored it this way>",
+              "packages": ["<name>: <from> -> <to>", ...],
+              "concerns": ["<anything a human should know; empty array if none>"]
+            }
+
+            Do not post comments or interact with GitHub. The workflow reads this
+            file and handles everything else.
+
+      - name: Read verdict
+        id: verdict
+        run: |
+          # Fail safe: any problem reading the verdict yields confidence 0, which
+          # never merges.
+          if [ ! -f dep-review-verdict.json ]; then
+            echo "No verdict file produced (Claude step outcome: ${{ steps.claude.outcome }})."
+            echo "confidence=0" >> "$GITHUB_OUTPUT"
+            echo "reason=no-verdict" >> "$GITHUB_OUTPUT"
+            echo "should_merge=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! jq empty dep-review-verdict.json 2>/dev/null; then
+            echo "Verdict file is not valid JSON."
+            echo "confidence=0" >> "$GITHUB_OUTPUT"
+            echo "reason=bad-json" >> "$GITHUB_OUTPUT"
+            echo "should_merge=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CONF=$(jq -r 'if (type == "object" and (.confidence | type) == "number") then (.confidence | floor) else "invalid" end' dep-review-verdict.json 2>/dev/null)
+          if ! [[ "$CONF" =~ ^[0-9]+$ ]] || [ "$CONF" -gt 100 ]; then
+            echo "Confidence is missing or not a number in 0-100 (got: $CONF)."
+            echo "confidence=0" >> "$GITHUB_OUTPUT"
+            echo "reason=bad-confidence" >> "$GITHUB_OUTPUT"
+            echo "should_merge=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Confidence: $CONF (threshold $CONFIDENCE_THRESHOLD)"
+          echo "confidence=$CONF" >> "$GITHUB_OUTPUT"
+          echo "reason=ok" >> "$GITHUB_OUTPUT"
+
+          if [ "$CONF" -ge "$CONFIDENCE_THRESHOLD" ]; then
+            echo "should_merge=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_merge=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Waits for the PR's own CI before merging. The workflow already ran
+      # lint/build/tests before opening the PR, but that was on this runner -
+      # this is the PR's checks, the same ones a human would look at.
+      #
+      # Fails closed: if no check ever registers, or any check fails, the PR is
+      # left open. The scheduled run that gets here is not itself a check on the
+      # PR, so there is no deadlock.
+      - name: Wait for PR checks
+        id: checks
+        if: steps.verdict.outputs.should_merge == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COUNT=0
+          for _ in $(seq 1 20); do
+            COUNT=$(gh pr checks "$PR_NUMBER" --json name --jq 'length' 2>/dev/null || echo 0)
+            [ "$COUNT" -gt 0 ] && break
+            echo "No checks registered yet, waiting..."
+            sleep 15
+          done
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "No CI checks ever registered on PR #$PR_NUMBER - refusing to merge."
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "detail=no checks registered on the PR" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if gh pr checks "$PR_NUMBER" --watch --fail-fast --interval 30; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+            echo "detail=all checks passed" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "detail=one or more checks failed" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Posted with GITHUB_TOKEN on purpose, so the comment comes from
+      # github-actions[bot]. GitHub does not notify you about your own actions,
+      # and the merge below runs as the PAT owner - a self-mention would be
+      # silent. From the bot, the @mention actually reaches the codeowner.
+      - name: Post assessment and notify codeowner
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONFIDENCE: ${{ steps.verdict.outputs.confidence }}
+          REASON: ${{ steps.verdict.outputs.reason }}
+          SHOULD_MERGE: ${{ steps.verdict.outputs.should_merge }}
+          CHECKS_PASSED: ${{ steps.checks.outputs.passed }}
+          CHECKS_DETAIL: ${{ steps.checks.outputs.detail }}
+        run: |
+          if [ "$REASON" = "ok" ]; then
+            SUMMARY=$(jq -r '.summary // "No summary provided."' dep-review-verdict.json)
+            PACKAGES=$(jq -r '(.packages // []) | if length == 0 then "_None listed._" else map("- `" + . + "`") | join("\n") end' dep-review-verdict.json)
+            CONCERNS=$(jq -r '(.concerns // []) | if length == 0 then "_None raised._" else map("- " + .) | join("\n") end' dep-review-verdict.json)
+          else
+            SUMMARY="The review did not produce a usable verdict (\`$REASON\`), so this PR was left for manual review. Claude step outcome: \`${{ steps.claude.outcome }}\`."
+            PACKAGES="_Unavailable._"
+            CONCERNS="_Unavailable._"
+          fi
+
+          # Everyone named in CODEOWNERS, falling back to the repo owner.
+          OWNERS=$(grep -ohE '@[A-Za-z0-9_/-]+' .github/CODEOWNERS 2>/dev/null | sort -u | tr '\n' ' ')
+          [ -z "$OWNERS" ] && OWNERS="@${GITHUB_REPOSITORY%%/*}"
+
+          if [ "$SHOULD_MERGE" = "true" ] && [ "$CHECKS_PASSED" = "true" ]; then
+            HEADING="Merged automatically"
+            VERDICT="Confidence **$CONFIDENCE/100** met the threshold of $CONFIDENCE_THRESHOLD and all CI checks passed, so this was merged and deployed without human review."
+            NOTIFY="$OWNERS - heads up: this dependency update was merged and deployed automatically. Nothing is required of you; this notice exists so an unattended change to production is not silent."
+          elif [ "$SHOULD_MERGE" = "true" ]; then
+            HEADING="Not merged - CI did not pass"
+            VERDICT="Confidence **$CONFIDENCE/100** met the threshold, but the PR was **not** merged: $CHECKS_DETAIL."
+            NOTIFY="$OWNERS - this one needs you."
+          else
+            HEADING="Left for review"
+            VERDICT="Confidence **$CONFIDENCE/100** is below the threshold of $CONFIDENCE_THRESHOLD, so this PR is left open for you."
+            NOTIFY="$OWNERS - this one needs you."
+          fi
+
+          gh pr comment "$PR_NUMBER" --body "$(cat <<EOF
+          ## Claude dependency review - $HEADING
+
+          $VERDICT
+
+          $SUMMARY
+
+          ### Packages
+
+          $PACKAGES
+
+          ### Notes
+
+          $CONCERNS
+
+          ---
+
+          $NOTIFY
+
+          <sub>The diff here is version numbers, not dependency source, so this assesses how routine the bump looks - not whether the published packages are safe. Threshold is set in \`dependency-updates.yml\`.</sub>
+          EOF
+          )"
+
+      # Merges with the PAT so the push to main triggers the deploy workflow.
+      # GITHUB_TOKEN would merge but never deploy.
+      - name: Merge and deploy
+        if: steps.verdict.outputs.should_merge == 'true' && steps.checks.outputs.passed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PVG_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          # Belt and braces: re-check both gates here so a mistyped step
+          # condition cannot merge something that should not be merged.
+          CONF="${{ steps.verdict.outputs.confidence }}"
+          if [ "$CONF" -lt "$CONFIDENCE_THRESHOLD" ]; then
+            echo "Confidence $CONF is below $CONFIDENCE_THRESHOLD - refusing to merge."
+            exit 1
+          fi
+          if [ "${{ steps.checks.outputs.passed }}" != "true" ]; then
+            echo "CI checks did not pass - refusing to merge."
+            exit 1
+          fi
+
+          gh pr merge "$PR_NUMBER" --merge --delete-branch
+          echo "Merged PR #$PR_NUMBER. The deploy workflow runs on the resulting push to main,"
+          echo "and its deploy job requires its own test job to pass first."
