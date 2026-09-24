@@ -1,22 +1,17 @@
 name: Claude Code Review
 
+# On demand only: apply the "ai-review" label to a PR to request a review.
+# Re-applying the label after removing it runs a fresh review.
 on:
   pull_request:
-    types: [opened, synchronize, ready_for_review, reopened]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+    types: [labeled]
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Every label added to a PR starts this workflow, so the job itself has to
+    # check which label it was - without this, labelling a PR "bug" would run a
+    # review too.
+    if: github.event.label.name == 'ai-review'
 
     runs-on: ubuntu-latest
     permissions:
