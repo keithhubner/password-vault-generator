@@ -1,0 +1,88 @@
+# Automated dependency updates.
+#
+# Standing policy: ~/.claude/CLAUDE.md, "Dependencies and patching" (added after
+# the Vegan Eat incident, September 2026).
+#
+# Minor and patch updates are grouped into a single PR per ecosystem to keep the
+# review load down. Major versions come through individually, because they need
+# a human to look at them.
+#
+# Security updates are a separate repository setting (Settings > Code security >
+# Dependabot security updates), not something this file can turn on. The groups
+# below carry `applies-to: security-updates` so that when Dependabot raises a
+# security PR, it is grouped the same way.
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/London"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    groups:
+      npm-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      npm-security:
+        applies-to: security-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/London"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(actions)"
+    groups:
+      actions-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      actions-security:
+        applies-to: security-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  # The Dockerfile pins node:22-alpine; this keeps the base image patched.
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/London"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(docker)"
+    groups:
+      docker-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      docker-security:
+        applies-to: security-updates
+        update-types:
+          - "minor"
+          - "patch"

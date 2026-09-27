@@ -24,6 +24,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Fails the build on a critical advisory in a RUNTIME dependency.
+      # Policy: ~/.claude/CLAUDE.md, "Dependencies and patching".
+      # --omit=dev because a dev-only advisory should not block a deploy;
+      # `npm audit` (all deps) is reported on, not gated.
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=critical
+
       - name: Lint
         run: npm run lint
 
