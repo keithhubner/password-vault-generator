@@ -73,6 +73,10 @@ When adding new features, API endpoints, or changing existing API functionality:
 3. Update API examples if the request/response format changes
 4. If adding a new password manager format, add it to the format capabilities table in the docs
 
+### Dependencies
+
+Dependency and patching rules live in the global policy at `~/.claude/CLAUDE.md` ("Dependencies and patching") — read it before changing dependencies. This repo has Dependabot (`.github/dependabot.yml`) and a CI gate running `npm audit --omit=dev --audit-level=critical`.
+
 ### Versioning Requirements
 
 Every user-facing change must include:
