@@ -38,7 +38,7 @@
     "@radix-ui/react-popover": "^1.1.23",
     "@radix-ui/react-scroll-area": "^1.2.18",
     "@radix-ui/react-select": "^2.3.7",
-    "@radix-ui/react-slider": "^1.2.2",
+    "@radix-ui/react-slider": "^1.4.7",
     "@radix-ui/react-slot": "^1.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
