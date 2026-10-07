@@ -92,7 +92,7 @@ jobs:
 
       # 4. Set up Docker Buildx
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v4
 
       # 5. Log in to GitHub Container Registry (ghcr.io)
       - name: Log in to GitHub Container Registry
