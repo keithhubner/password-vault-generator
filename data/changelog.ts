@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.2.7",
+    date: "2026-11-09",
+    changes: [
+      { type: "changed", description: "Updated the icon library (lucide-react 1.x). The footer GitHub icon is now drawn inline (same artwork) because the library no longer ships brand icons" },
+    ],
+  },
+  {
     version: "1.2.6",
     date: "2026-11-09",
     changes: [
