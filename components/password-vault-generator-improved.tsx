@@ -448,7 +448,7 @@ export default function PasswordVaultGeneratorImproved() {
     <ErrorBoundary>
       <div className="min-h-screen bg-background">
         {/* Sticky Header */}
-        <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
           <div className="max-w-2xl mx-auto flex h-12 items-center justify-between px-4">
             <div className="flex items-center">
               <Lock className="h-5 w-5 mr-2 text-primary" aria-hidden="true" />

@@ -13,7 +13,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ progress, 
   const percentage = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-xs flex items-center justify-center z-50">
       <div className="bg-card border border-border rounded-md p-4 max-w-xs w-full mx-4 shadow-lg">
         <h3 className="text-sm font-semibold mb-3">Generating Vault</h3>
         <div className="mb-3">
