@@ -117,7 +117,7 @@ kubectl describe pod <pod-name> -n password-vault-generator
 ```
 
 **Image Pull Issues:**
-- Check the `ghcr-secret` exists
+- The image is public, so no pull secret is configured; check the GHCR package is still public
 - Verify image tag exists in registry
 
 **Environment Variables:**
