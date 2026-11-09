@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.2.8",
+    date: "2026-11-09",
+    changes: [
+      { type: "changed", description: "Upgraded the styling engine to Tailwind CSS 4. Form spacing is slightly tighter than before; no functional change" },
+    ],
+  },
+  {
     version: "1.2.7",
     date: "2026-11-09",
     changes: [

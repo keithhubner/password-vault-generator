@@ -1,6 +1,6 @@
 {
   "name": "password-vault-generator",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "A comprehensive Next.js application for generating test password vault data in multiple formats including Bitwarden, LastPass, Keeper, Microsoft Edge, KeePassX, and KeePass2",
   "keywords": [
     "password",
@@ -52,13 +52,14 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.5",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "eslint": "^10.14.0",
     "eslint-config-next": "^16.4.5",
     "postcss": "^8.5.32",
-    "tailwindcss": "^3.4.19",
+    "tailwindcss": "^4.3.5",
     "typescript": "^5.9.3"
   },
   "overrides": {

@@ -290,7 +290,7 @@ const commonWeakPasswords = [
   "football",
   "baseball",
   "master",
-  "shadow",
+  "shadow-sm",
   "superman",
   "trustno1",
   "iloveyou",
