@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.2.5",
+    date: "2026-11-08",
+    changes: [
+      { type: "fixed", description: "Updated Next.js to 15.5.29 to fix security advisories in the image optimization API and Server Actions" },
+    ],
+  },
+  {
     version: "1.2.4",
     date: "2026-09-21",
     changes: [
