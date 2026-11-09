@@ -6,7 +6,10 @@
 # 3. Enables Civo branding via environment variables in ConfigMap
 #
 # Required secrets:
-# - KUBE_CONFIG: Base64 encoded kubeconfig for Civo cluster
+# - KUBE_CONFIG: Base64 encoded kubeconfig for Civo cluster. Stored as a secret of
+#   the `production` environment (restricted to main); the credential is a
+#   namespace-scoped ServiceAccount, so this workflow must not touch cluster-scoped
+#   resources (e.g. the Namespace).
 
 name: Deploy PasswordVaultGenerator to Civo Kubernetes
 
@@ -17,6 +20,11 @@ on:
 
 permissions:
   contents: read
+
+# Serialise deploys so an older run can't finish last and put a stale image live.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   test:
@@ -78,6 +86,8 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production # KUBE_CONFIG is an environment secret
     permissions:
       contents: read
       packages: write # push the image to GHCR with GITHUB_TOKEN
@@ -121,9 +131,12 @@ jobs:
 
       # 7. Create Kubeconfig
       - name: Create Kubeconfig
+        env:
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG }}
         run: |
-          mkdir -p $HOME/.kube
-          echo ${{ secrets.KUBE_CONFIG }} | base64 -d > $HOME/.kube/config
+          umask 077
+          printf '%s' "$KUBE_CONFIG_B64" | base64 -d > "$RUNNER_TEMP/kubeconfig"
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
 
       # 8. Deploy to Civo Kubernetes
       - name: Deploy to Civo Kubernetes
@@ -136,7 +149,6 @@ jobs:
           grep "image:" k8s/deployment.yaml
           
           # Apply all Kubernetes manifests in order
-          kubectl apply -f k8s/namespace.yaml
           kubectl apply -f k8s/configmap.yaml
           kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/deployment.yaml
@@ -144,7 +156,7 @@ jobs:
           
           # Wait for deployment to complete
           kubectl rollout restart deployment/password-vault-generator -n password-vault-generator
-          kubectl rollout status deployment/password-vault-generator -n password-vault-generator
+          kubectl rollout status deployment/password-vault-generator -n password-vault-generator --timeout=120s
           
           # Verify deployment
           kubectl get pods -n password-vault-generator
