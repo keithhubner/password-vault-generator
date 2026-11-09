@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Architecture
 
-**Next.js 15** application generating test password vault data for 7 password managers: Bitwarden, LastPass, Keeper, Microsoft Edge, KeePassX, KeePass2, Password Depot.
+**Next.js 16** application generating test password vault data for 7 password managers: Bitwarden, LastPass, Keeper, Microsoft Edge, KeePassX, KeePass2, Password Depot.
 
 ### Data Flow
 

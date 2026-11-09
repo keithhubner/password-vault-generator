@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.2.6",
+    date: "2026-11-09",
+    changes: [
+      { type: "changed", description: "Upgraded to Next.js 16 (Turbopack builds) and renamed the API CORS middleware to the new proxy convention. No change to the API or the generated data" },
+    ],
+  },
+  {
     version: "1.2.5",
     date: "2026-11-08",
     changes: [
